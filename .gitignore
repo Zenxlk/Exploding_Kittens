@@ -93,3 +93,4 @@ migrate_working_dir/
 
 # ── Claude Code ───────────────────────────────────────────────────────────────
 .claude/
+CLAUDE.md
