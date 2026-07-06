@@ -11,14 +11,14 @@ dependencies:
     sdk: flutter
 
   # ── Estado ──────────────────────────────────────────
-  flutter_riverpod: ^2.5.1
-  riverpod_annotation: ^2.3.5
+  flutter_riverpod: ^3.1.0
+  riverpod_annotation: ^4.0.0
 
   # ── Navegación ──────────────────────────────────────
   go_router: ^14.0.0
 
   # ── Modelos inmutables ───────────────────────────────
-  freezed_annotation: ^2.4.1
+  freezed_annotation: ^3.1.0
   json_annotation: ^4.9.0
 
   # ── Red ─────────────────────────────────────────────
@@ -51,12 +51,12 @@ dev_dependencies:
     sdk: flutter
 
   # Generación de código
-  build_runner: ^2.4.11
-  freezed: ^2.5.2
-  json_serializable: ^6.8.0
-  riverpod_generator: ^2.4.0
-  custom_lint: ^0.7.0
-  riverpod_lint: ^2.3.10
+  build_runner: ^2.15.0
+  freezed: ^3.2.3
+  json_serializable: ^6.11.2
+  riverpod_generator: ^4.0.0+1
+  custom_lint: ^0.8.1
+  riverpod_lint: ^3.1.0
 
   # Testing
   mocktail: ^1.0.4
