@@ -1,0 +1,28 @@
+version: 2
+
+updates:
+  - package-ecosystem: pub
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Europe/Madrid
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    ignore:
+      # Riverpod 3.x introduce cambios breaking — actualizar manualmente
+      - dependency-name: flutter_riverpod
+        update-types: ["version-update:semver-major"]
+      - dependency-name: riverpod_annotation
+        update-types: ["version-update:semver-major"]
+      - dependency-name: riverpod_generator
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    labels:
+      - ci
