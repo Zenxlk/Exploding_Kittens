@@ -1,7 +1,7 @@
 abstract final class AssetPaths {
   // Cartas
   static const String cards = 'assets/cards/';
-  static String card(String name) => '${cards}$name.png';
+  static String card(String name) => '$cards$name.png';
 
   static const String cardBack = 'assets/cards/card_back.png';
   static const String explodingKitten = 'assets/cards/exploding_kitten.png';

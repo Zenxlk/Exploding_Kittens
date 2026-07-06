@@ -1,6 +1,10 @@
 import 'package:go_router/go_router.dart';
 import '../../features/splash/presentation/screens/splash_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/lobby/presentation/screens/lobby_screen.dart';
+import '../../features/game/presentation/screens/game_screen.dart';
+import '../../features/game/presentation/screens/game_over_screen.dart';
+import '../../features/settings/presentation/screens/settings_screen.dart';
 import 'route_names.dart';
 
 final appRouter = GoRouter(
@@ -8,14 +12,30 @@ final appRouter = GoRouter(
   routes: [
     GoRoute(
       path: RouteNames.splash,
-      builder: (context, state) => const SplashScreen(),
+      builder: (_, __) => const SplashScreen(),
     ),
     GoRoute(
       path: RouteNames.home,
-      builder: (context, state) => const HomeScreen(),
+      builder: (_, __) => const HomeScreen(),
     ),
-    // TODO(fase-3): Añadir rutas de lobby
-    // TODO(fase-4): Añadir rutas de game y game-over
-    // TODO: Añadir ruta de settings
+    GoRoute(
+      path: RouteNames.lobby,
+      builder: (_, __) => const LobbyScreen(),
+    ),
+    GoRoute(
+      path: RouteNames.game,
+      builder: (_, __) => const GameScreen(),
+    ),
+    GoRoute(
+      path: RouteNames.gameOver,
+      builder: (_, state) {
+        final winnerId = state.uri.queryParameters['winnerId'] ?? '';
+        return GameOverScreen(winnerId: winnerId);
+      },
+    ),
+    GoRoute(
+      path: RouteNames.settings,
+      builder: (_, __) => const SettingsScreen(),
+    ),
   ],
 );

@@ -12,7 +12,7 @@ final class NetworkFailure extends Failure {
 }
 
 final class UnknownFailure extends Failure {
-  const UnknownFailure([String message = 'Error desconocido']) : super(message);
+  const UnknownFailure([super.message = 'Error desconocido']);
 }
 
 // Resultado funcional — evita lanzar excepciones en lógica de negocio
@@ -25,7 +25,7 @@ final class Success<T> extends Result<T> {
   final T value;
 }
 
-final class Failure_<T> extends Result<T> {
-  const Failure_(this.failure);
+final class FailureResult<T> extends Result<T> {
+  const FailureResult(this.failure);
   final Failure failure;
 }
