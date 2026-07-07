@@ -179,6 +179,9 @@ class WsServer {
     }
     _updateRoom(room.copyWith(status: LobbyStatus.starting));
     _broadcast(const GameStartingMessage());
+    // Send updated room so clients see status:starting via roomStream and
+    // can react without needing to listen to the raw messages stream.
+    _broadcastRoomState();
   }
 
   void _onDisconnect(WebSocket ws) {

@@ -19,8 +19,12 @@ final appRouter = GoRouter(
       builder: (_, __) => const HomeScreen(),
     ),
     GoRoute(
-      path: RouteNames.lobby,
-      builder: (_, __) => const LobbyScreen(),
+      path: RouteNames.createRoom,
+      builder: (_, __) => const LobbyScreen(isHost: true),
+    ),
+    GoRoute(
+      path: RouteNames.joinRoom,
+      builder: (_, __) => const LobbyScreen(isHost: false),
     ),
     GoRoute(
       path: RouteNames.game,

@@ -60,7 +60,7 @@ class HomeScreen extends StatelessWidget {
               _MenuButton(
                 label: 'Crear sala',
                 icon: Icons.add_circle_outline_rounded,
-                onTap: () => context.push(RouteNames.lobby),
+                onTap: () => context.push(RouteNames.createRoom),
               )
                   .animate()
                   .fadeIn(delay: 500.ms, duration: 400.ms)
@@ -71,7 +71,7 @@ class HomeScreen extends StatelessWidget {
               _MenuButton(
                 label: 'Unirse a sala',
                 icon: Icons.wifi_rounded,
-                onTap: () => context.push(RouteNames.lobby),
+                onTap: () => context.push(RouteNames.joinRoom),
               )
                   .animate()
                   .fadeIn(delay: 620.ms, duration: 400.ms)
