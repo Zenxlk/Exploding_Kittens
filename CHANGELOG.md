@@ -11,6 +11,13 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.3.1] — 2026-07-06
+
+### Añadido
+- Tests de widgets para `HomeScreen` (render de título/botones/pie y navegación a crear sala, unirse a sala y ajustes) y `SettingsScreen` (carga de preferencias persistidas, guardado de nombre de jugador, toggle de sonido) — cierra el ítem pendiente de Fase 2, 58 tests totales pasando
+
+---
+
 ## [0.3.0] — 2026-07-06
 
 ### Añadido — Fase 3: Lobby local WiFi
