@@ -37,16 +37,21 @@ class WsServer {
   bool get isRunning => _httpServer != null;
 
   // Starts the server and initialises the room with the host as first player.
+  // port: pass 0 to let the OS assign a free port (useful in tests).
   static Future<WsServer> start({
     required String hostId,
     required String hostName,
+    int port = AppConstants.localGamePort,
   }) async {
     final server = WsServer._(hostId: hostId);
-    await server._bind(hostName: hostName);
+    await server._bind(hostName: hostName, port: port);
     return server;
   }
 
-  Future<void> _bind({required String hostName}) async {
+  // Actual bound port — may differ from the requested port when 0 was passed.
+  int get port => _httpServer?.port ?? AppConstants.localGamePort;
+
+  Future<void> _bind({required String hostName, required int port}) async {
     _room = LobbyRoom(
       id: const Uuid().v4(),
       hostId: _hostId,
@@ -57,7 +62,7 @@ class WsServer {
 
     _httpServer = await HttpServer.bind(
       InternetAddress.anyIPv4,
-      AppConstants.localGamePort,
+      port,
     );
 
     _httpServer!.listen((req) => _upgradeRequest(req).catchError((_) {}));
