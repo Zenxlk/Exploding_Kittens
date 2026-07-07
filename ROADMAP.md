@@ -25,15 +25,15 @@ empezar la siguiente.
 
 ---
 
-## Fase 2 — UI base y navegación 🔄
+## Fase 2 — UI base y navegación ✅
 
-- [ ] Rutas completas en `app_router.dart` (lobby, game, game-over, settings)
-- [ ] `SplashScreen` — logo animado con Lottie
-- [ ] `HomeScreen` — menú principal con botones animados
-- [ ] `SettingsScreen` — volumen, nombre de jugador, preferencias
-- [ ] Sistema de tema oscuro consolidado
-- [ ] Fuente personalizada integrada (`ExplodingFont`)
-- [ ] Tests de widgets para pantallas principales
+- [x] Rutas completas en `app_router.dart` (lobby, game, game-over, settings)
+- [x] `SplashScreen` — logo animado con Lottie
+- [x] `HomeScreen` — menú principal con botones animados
+- [x] `SettingsScreen` — volumen, nombre de jugador, preferencias
+- [x] Sistema de tema oscuro consolidado
+- [x] Fuente personalizada integrada (`ExplodingFont`)
+- [x] Tests de widgets para pantallas principales — `HomeScreen` (render + navegación) y `SettingsScreen` (carga de prefs, guardado de nombre, toggle de sonido)
 
 ---
 
