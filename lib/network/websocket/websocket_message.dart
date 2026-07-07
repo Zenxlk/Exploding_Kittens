@@ -15,21 +15,21 @@ sealed class WsMessage {
   static WsMessage fromJson(Map<String, dynamic> json) {
     return switch (json['type'] as String) {
       // ── lobby ────────────────────────────────────────────────────────────
-      'join_room'         => JoinRoomMessage._fromJson(json),
-      'set_ready'         => SetReadyMessage._fromJson(json),
-      'leave_room'        => LeaveRoomMessage._fromJson(json),
-      'start_game'        => const StartGameMessage(),
-      'room_state'        => RoomStateMessage._fromJson(json),
-      'game_starting'     => const GameStartingMessage(),
-      'player_kicked'     => PlayerKickedMessage._fromJson(json),
-      'ws_error'          => WsErrorMessage._fromJson(json),
+      'join_room' => JoinRoomMessage._fromJson(json),
+      'set_ready' => SetReadyMessage._fromJson(json),
+      'leave_room' => LeaveRoomMessage._fromJson(json),
+      'start_game' => const StartGameMessage(),
+      'room_state' => RoomStateMessage._fromJson(json),
+      'game_starting' => const GameStartingMessage(),
+      'player_kicked' => PlayerKickedMessage._fromJson(json),
+      'ws_error' => WsErrorMessage._fromJson(json),
       // ── heartbeat ────────────────────────────────────────────────────────
-      'ping'              => const PingMessage(),
-      'pong'              => const PongMessage(),
+      'ping' => const PingMessage(),
+      'pong' => const PongMessage(),
       // ── phase 5 (in-game) ────────────────────────────────────────────────
-      'game_state'        => GameStateMessage._fromJson(json),
-      'action'            => ActionMessage._fromJson(json),
-      'player_reconnected'=> PlayerReconnectedMessage._fromJson(json),
+      'game_state' => GameStateMessage._fromJson(json),
+      'action' => ActionMessage._fromJson(json),
+      'player_reconnected' => PlayerReconnectedMessage._fromJson(json),
       //
       final t => throw FormatException('Unknown WsMessage type: $t'),
     };
@@ -44,8 +44,8 @@ final class JoinRoomMessage extends WsMessage {
   final String playerId;
   final String name;
 
-  factory JoinRoomMessage._fromJson(Map<String, dynamic> j) =>
-      JoinRoomMessage(playerId: j['playerId'] as String, name: j['name'] as String);
+  factory JoinRoomMessage._fromJson(Map<String, dynamic> j) => JoinRoomMessage(
+      playerId: j['playerId'] as String, name: j['name'] as String);
 
   @override
   Map<String, dynamic> toJson() =>
@@ -73,8 +73,7 @@ final class LeaveRoomMessage extends WsMessage {
       LeaveRoomMessage(playerId: j['playerId'] as String);
 
   @override
-  Map<String, dynamic> toJson() =>
-      {'type': 'leave_room', 'playerId': playerId};
+  Map<String, dynamic> toJson() => {'type': 'leave_room', 'playerId': playerId};
 }
 
 // Sent by the host only; no payload needed.
@@ -119,8 +118,7 @@ final class PlayerKickedMessage extends WsMessage {
       PlayerKickedMessage(reason: j['reason'] as String);
 
   @override
-  Map<String, dynamic> toJson() =>
-      {'type': 'player_kicked', 'reason': reason};
+  Map<String, dynamic> toJson() => {'type': 'player_kicked', 'reason': reason};
 }
 
 // Generic error response from the server.
@@ -133,8 +131,7 @@ final class WsErrorMessage extends WsMessage {
       WsErrorMessage(message: j['message'] as String);
 
   @override
-  Map<String, dynamic> toJson() =>
-      {'type': 'ws_error', 'message': message};
+  Map<String, dynamic> toJson() => {'type': 'ws_error', 'message': message};
 }
 
 // ── Heartbeat ────────────────────────────────────────────────────────────────
@@ -163,8 +160,7 @@ final class GameStateMessage extends WsMessage {
       GameStateMessage(stateJson: j['payload'] as Map<String, dynamic>);
 
   @override
-  Map<String, dynamic> toJson() =>
-      {'type': 'game_state', 'payload': stateJson};
+  Map<String, dynamic> toJson() => {'type': 'game_state', 'payload': stateJson};
 }
 
 // Player action forwarded to the host engine.
@@ -177,8 +173,7 @@ final class ActionMessage extends WsMessage {
       ActionMessage(actionJson: j['payload'] as Map<String, dynamic>);
 
   @override
-  Map<String, dynamic> toJson() =>
-      {'type': 'action', 'payload': actionJson};
+  Map<String, dynamic> toJson() => {'type': 'action', 'payload': actionJson};
 }
 
 // Notifies the host that a previously disconnected player is back.

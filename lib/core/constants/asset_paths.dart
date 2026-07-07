@@ -15,7 +15,8 @@ abstract final class AssetPaths {
 
   // Gatos
   static const String tacocat = 'assets/cards/tacocat.png';
-  static const String rainbowRalphingCat = 'assets/cards/rainbow_ralphing_cat.png';
+  static const String rainbowRalphingCat =
+      'assets/cards/rainbow_ralphing_cat.png';
   static const String beardedDragon = 'assets/cards/bearded_dragon.png';
   static const String cattermelon = 'assets/cards/cattermelon.png';
   static const String hairyPotatoCat = 'assets/cards/hairy_potato_cat.png';

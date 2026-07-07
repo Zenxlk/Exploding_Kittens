@@ -98,7 +98,9 @@ class WsClient {
     // Heartbeat — detects silent connection drops.
     _pingTimer = Timer.periodic(
       const Duration(seconds: 30),
-      (_) { if (_connected) send(const PingMessage()); },
+      (_) {
+        if (_connected) send(const PingMessage());
+      },
     );
   }
 

@@ -23,8 +23,7 @@ class LobbyRoom extends Equatable {
       players.length >= GameConstants.minPlayers &&
       players.every((p) => p.isReady || p.isHost);
 
-  LobbyPlayer? get host =>
-      players.where((p) => p.id == hostId).firstOrNull;
+  LobbyPlayer? get host => players.where((p) => p.id == hostId).firstOrNull;
 
   LobbyRoom copyWith({
     List<LobbyPlayer>? players,

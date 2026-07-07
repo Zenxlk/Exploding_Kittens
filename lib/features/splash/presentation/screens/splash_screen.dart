@@ -53,28 +53,20 @@ class _SplashScreenState extends State<SplashScreen> {
                   end: const Offset(1, 1),
                 )
                 .fadeIn(duration: 400.ms),
-
             const SizedBox(height: 24),
-
             Text(AppConstants.appName, style: AppTextStyles.headline)
                 .animate()
                 .fadeIn(delay: 450.ms, duration: 500.ms)
                 .slideY(begin: 0.25, end: 0, curve: Curves.easeOut),
-
             const SizedBox(height: 6),
-
             Text(
               AppConstants.company,
               style: AppTextStyles.caption.copyWith(
                 color: AppColors.onBackground.withValues(alpha: 0.55),
                 letterSpacing: 2,
               ),
-            )
-                .animate()
-                .fadeIn(delay: 700.ms, duration: 500.ms),
-
+            ).animate().fadeIn(delay: 700.ms, duration: 500.ms),
             const SizedBox(height: 56),
-
             SizedBox(
               width: 28,
               height: 28,
@@ -82,9 +74,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 strokeWidth: 2,
                 color: AppColors.primary.withValues(alpha: 0.55),
               ),
-            )
-                .animate()
-                .fadeIn(delay: 950.ms, duration: 400.ms),
+            ).animate().fadeIn(delay: 950.ms, duration: 400.ms),
           ],
         ),
       ),

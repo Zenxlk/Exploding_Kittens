@@ -295,9 +295,7 @@ class _RoomCard extends StatelessWidget {
             Text(
               '${room.playerCount}/${room.maxPlayers}',
               style: AppTextStyles.caption.copyWith(
-                color: room.isFull
-                    ? AppColors.eliminated
-                    : AppColors.success,
+                color: room.isFull ? AppColors.eliminated : AppColors.success,
               ),
             ),
             const Gap(8),
@@ -407,8 +405,8 @@ class _RoomHeader extends ConsumerWidget {
                             Icon(
                               Icons.copy_rounded,
                               size: 14,
-                              color: AppColors.onBackground
-                                  .withValues(alpha: 0.4),
+                              color:
+                                  AppColors.onBackground.withValues(alpha: 0.4),
                             ),
                           ],
                         ],
@@ -477,8 +475,7 @@ class _PlayerTile extends StatelessWidget {
           player.name.isEmpty ? '?' : player.name[0].toUpperCase(),
           style: AppTextStyles.body.copyWith(
             fontWeight: FontWeight.bold,
-            color:
-                player.isHost ? AppColors.primary : AppColors.onBackground,
+            color: player.isHost ? AppColors.primary : AppColors.onBackground,
           ),
         ),
       ),

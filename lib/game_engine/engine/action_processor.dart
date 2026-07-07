@@ -67,7 +67,8 @@ abstract final class ActionProcessor {
     }
 
     // Carta normal robada → añadir a la mano y terminar turno
-    final updatedPlayers = _addCardToHand(action.playerId, drawn, state.players);
+    final updatedPlayers =
+        _addCardToHand(action.playerId, drawn, state.players);
     next = next.copyWith(players: updatedPlayers);
     return TurnManager.advance(next);
   }
@@ -102,8 +103,7 @@ abstract final class ActionProcessor {
     final target = next.playerById(action.targetPlayerId)!;
     if (target.hand.isEmpty) return TurnManager.openNopeWindow(next, action);
 
-    final randomCard =
-        target.hand[Random().nextInt(target.hand.length)];
+    final randomCard = target.hand[Random().nextInt(target.hand.length)];
 
     next = _removeCardFromHand(action.targetPlayerId, randomCard.id, next);
     next = _addCardToHand(action.playerId, randomCard, next.players)
@@ -145,7 +145,8 @@ abstract final class ActionProcessor {
     }
 
     final target = next.playerById(action.targetPlayerId)!;
-    final chosen = target.hand.where((c) => c.id == action.chosenCardId).firstOrNull;
+    final chosen =
+        target.hand.where((c) => c.id == action.chosenCardId).firstOrNull;
     if (chosen != null) {
       next = _removeCardFromHand(action.targetPlayerId, chosen.id, next);
       next = next.copyWith(
@@ -158,7 +159,8 @@ abstract final class ActionProcessor {
   // ── Defuse ────────────────────────────────────────────────────────────────────
 
   static GameState _processDefuse(DefuseBombAction action, GameState state) {
-    var next = _removeCardFromHand(action.playerId, action.defuseCard.id, state);
+    var next =
+        _removeCardFromHand(action.playerId, action.defuseCard.id, state);
 
     // Reinsertar la bomba en la posición elegida
     final bomb = state.deck.drawPile
@@ -184,10 +186,8 @@ abstract final class ActionProcessor {
     var next = _removeCardFromHand(action.playerId, action.nopeCard.id, state);
     next = next.copyWith(deck: DeckManager.discard(next.deck, action.nopeCard));
 
-    final newChain =
-        NopeRules.incrementNopeChain(next.turn.nopeChainCount);
-    next = next.copyWith(
-        turn: next.turn.copyWith(nopeChainCount: newChain));
+    final newChain = NopeRules.incrementNopeChain(next.turn.nopeChainCount);
+    next = next.copyWith(turn: next.turn.copyWith(nopeChainCount: newChain));
 
     _emit(NopedEvent(
         timestamp: _now(), playerId: action.playerId, chainCount: newChain));
@@ -200,8 +200,7 @@ abstract final class ActionProcessor {
   static GameState _applyAttack(String playerId, GameState state) {
     final next = TurnManager.advance(state);
     // El siguiente jugador debe jugar 2 veces
-    return next.copyWith(
-        turn: next.turn.copyWith(actionsLeft: 2));
+    return next.copyWith(turn: next.turn.copyWith(actionsLeft: 2));
   }
 
   static GameState _applyShuffle(GameState state) {
@@ -222,9 +221,8 @@ abstract final class ActionProcessor {
 
   static GameState _eliminatePlayer(String playerId, GameState state) {
     final updated = state.players
-        .map((p) => p.id == playerId
-            ? p.copyWith(status: PlayerStatus.eliminated)
-            : p)
+        .map((p) =>
+            p.id == playerId ? p.copyWith(status: PlayerStatus.eliminated) : p)
         .toList();
     return state.copyWith(players: updated);
   }

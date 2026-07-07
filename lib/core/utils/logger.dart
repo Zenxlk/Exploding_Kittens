@@ -12,7 +12,8 @@ abstract final class AppLogger {
   static void warning(String msg, {String? tag}) =>
       _log(LogLevel.warning, msg, tag: tag);
 
-  static void error(String msg, {Object? error, StackTrace? stack, String? tag}) {
+  static void error(String msg,
+      {Object? error, StackTrace? stack, String? tag}) {
     _log(LogLevel.error, msg, tag: tag);
     if (error != null) debugPrint('  error: $error');
     if (stack != null) debugPrint('  stack: $stack');

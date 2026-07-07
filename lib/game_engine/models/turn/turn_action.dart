@@ -35,7 +35,7 @@ final class PlayFavorAction extends TurnAction {
 final class PlayCatPairAction extends TurnAction {
   const PlayCatPairAction({
     required super.playerId,
-    required this.cards,       // exactamente 2 cartas del mismo tipo gato
+    required this.cards, // exactamente 2 cartas del mismo tipo gato
     required this.targetPlayerId,
   });
   final List<CardModel> cards;
@@ -46,7 +46,7 @@ final class PlayCatPairAction extends TurnAction {
 final class PlayCatTrioAction extends TurnAction {
   const PlayCatTrioAction({
     required super.playerId,
-    required this.cards,        // exactamente 3 cartas del mismo tipo gato
+    required this.cards, // exactamente 3 cartas del mismo tipo gato
     required this.targetPlayerId,
     required this.chosenCardId,
   });

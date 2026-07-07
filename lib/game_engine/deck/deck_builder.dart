@@ -13,7 +13,8 @@ abstract final class DeckBuilder {
     required GameConfig config,
     Random? random,
   }) {
-    final rng = config.seed != null ? Random(config.seed) : (random ?? Random());
+    final rng =
+        config.seed != null ? Random(config.seed) : (random ?? Random());
     final n = players.length;
 
     // 1. Cartas base sin Defuse ni Exploding Kittens

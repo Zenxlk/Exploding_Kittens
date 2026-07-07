@@ -8,7 +8,8 @@ import 'package:flutter_test/flutter_test.dart';
 // Each test binds on port 0 (OS-assigned) to avoid collisions.
 void main() {
   // Helpers
-  Future<WsServer> startServer({String hostId = 'h1', String hostName = 'Host'}) =>
+  Future<WsServer> startServer(
+          {String hostId = 'h1', String hostName = 'Host'}) =>
       WsServer.start(hostId: hostId, hostName: hostName, port: 0);
 
   Future<WsClient> connectClient({
@@ -102,7 +103,8 @@ void main() {
       await server.close();
     });
 
-    test('startGame cambia el status a starting cuando canStart es true', () async {
+    test('startGame cambia el status a starting cuando canStart es true',
+        () async {
       final server = await startServer();
 
       // Host se conecta a su propio servidor

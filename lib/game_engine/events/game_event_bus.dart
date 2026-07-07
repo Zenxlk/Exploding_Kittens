@@ -11,8 +11,7 @@ class GameEventBus {
 
   Stream<GameEvent> get stream => _controller.stream;
 
-  Stream<T> on<T extends GameEvent>() =>
-      stream.where((e) => e is T).cast<T>();
+  Stream<T> on<T extends GameEvent>() => stream.where((e) => e is T).cast<T>();
 
   void emit(GameEvent event) {
     if (!_controller.isClosed) _controller.add(event);

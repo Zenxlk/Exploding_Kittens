@@ -8,9 +8,9 @@ import 'game_config.dart';
 import 'game_result.dart';
 
 enum GamePhase {
-  waiting,   // sala creada, esperando jugadores
-  playing,   // partida en curso
-  finished,  // partida terminada
+  waiting, // sala creada, esperando jugadores
+  playing, // partida en curso
+  finished, // partida terminada
 }
 
 class GameState extends Equatable {
@@ -74,8 +74,11 @@ class GameState extends Equatable {
       deck: deck ?? this.deck,
       turn: turn ?? this.turn,
       phase: phase ?? this.phase,
-      pendingAction: clearPendingAction ? null : (pendingAction ?? this.pendingAction),
-      seeTheFutureCards: clearSeeTheFuture ? null : (seeTheFutureCards ?? this.seeTheFutureCards),
+      pendingAction:
+          clearPendingAction ? null : (pendingAction ?? this.pendingAction),
+      seeTheFutureCards: clearSeeTheFuture
+          ? null
+          : (seeTheFutureCards ?? this.seeTheFutureCards),
       result: result ?? this.result,
       turnCount: turnCount ?? this.turnCount,
     );
@@ -83,7 +86,15 @@ class GameState extends Equatable {
 
   @override
   List<Object?> get props => [
-    id, config, players, deck, turn, phase,
-    pendingAction, seeTheFutureCards, result, turnCount,
-  ];
+        id,
+        config,
+        players,
+        deck,
+        turn,
+        phase,
+        pendingAction,
+        seeTheFutureCards,
+        result,
+        turnCount,
+      ];
 }

@@ -4,14 +4,12 @@ import '../models/player/player_status.dart';
 /// Reglas de transición y secuencia de turno.
 abstract final class TurnRules {
   /// ¿El turno actual ha terminado? (jugador robó y no hay acciones pendientes)
-  static bool isTurnOver(GameState state) =>
-      state.turn.phase.name == 'ended';
+  static bool isTurnOver(GameState state) => state.turn.phase.name == 'ended';
 
   /// Devuelve el id del siguiente jugador vivo en sentido horario.
   static String nextPlayerId(GameState state) {
-    final alive = state.players
-        .where((p) => p.status == PlayerStatus.active)
-        .toList();
+    final alive =
+        state.players.where((p) => p.status == PlayerStatus.active).toList();
     if (alive.isEmpty) throw StateError('No hay jugadores vivos');
 
     final currentIndex =

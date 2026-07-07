@@ -174,7 +174,8 @@ class WsServer {
 
   void _onStartGame(WebSocket ws) {
     if (_playerIdFor(ws) != _hostId) {
-      _send(ws, const WsErrorMessage(message: 'Only the host can start the game'));
+      _send(ws,
+          const WsErrorMessage(message: 'Only the host can start the game'));
       return;
     }
     final room = _room!;
@@ -197,8 +198,10 @@ class WsServer {
 
   // ── helpers ───────────────────────────────────────────────────────────────
 
-  String? _playerIdFor(WebSocket ws) =>
-      _clients.entries.where((e) => e.value == ws).map((e) => e.key).firstOrNull;
+  String? _playerIdFor(WebSocket ws) => _clients.entries
+      .where((e) => e.value == ws)
+      .map((e) => e.key)
+      .firstOrNull;
 
   void _send(WebSocket ws, WsMessage msg) {
     try {

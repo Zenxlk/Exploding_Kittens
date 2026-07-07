@@ -45,8 +45,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           child: CircularProgressIndicator(color: AppColors.primary),
         ),
         error: (e, _) => Center(
-          child: Text('Error al cargar ajustes: $e',
-              style: AppTextStyles.body),
+          child: Text('Error al cargar ajustes: $e', style: AppTextStyles.body),
         ),
         data: (settings) {
           // Sincroniza el controlador solo la primera vez o si cambió externamente
@@ -58,7 +57,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           return ListView(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             children: [
-
               // ── Perfil ──────────────────────────────────────────────────
               _SectionHeader('Perfil'),
               const Gap(12),
@@ -120,9 +118,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       Expanded(
                         child: Slider(
                           value: settings.volume,
-                          onChanged: (v) => ref
-                              .read(settingsProvider.notifier)
-                              .setVolume(v),
+                          onChanged: (v) =>
+                              ref.read(settingsProvider.notifier).setVolume(v),
                         ),
                       ),
                       const Icon(Icons.volume_up_rounded,
@@ -155,18 +152,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               _SettingsTile(
                 title: 'Versión',
                 icon: Icons.info_outline_rounded,
-                trailing: Text('0.1.0', style: AppTextStyles.caption.copyWith(
-                  color: AppColors.onBackground.withValues(alpha: 0.5),
-                )),
+                trailing: Text('0.1.0',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.onBackground.withValues(alpha: 0.5),
+                    )),
               ),
 
               _SettingsTile(
                 title: 'Proyecto de fans · Sin fines comerciales',
                 icon: Icons.favorite_border_rounded,
                 trailing: const SizedBox.shrink(),
-                subtitle: 'Basado en el juego original de Exploding Kittens LLC',
+                subtitle:
+                    'Basado en el juego original de Exploding Kittens LLC',
               ),
-
             ],
           );
         },

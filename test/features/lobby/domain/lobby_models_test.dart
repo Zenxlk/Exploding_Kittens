@@ -7,7 +7,8 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   // ── LobbyPlayer ────────────────────────────────────────────────────────────
   group('LobbyPlayer', () {
-    const player = LobbyPlayer(id: 'p1', name: 'Alice', isHost: false, isReady: false);
+    const player =
+        LobbyPlayer(id: 'p1', name: 'Alice', isHost: false, isReady: false);
 
     test('toJson / fromJson round-trip conserva todos los campos', () {
       final restored = LobbyPlayer.fromJson(player.toJson());
@@ -28,8 +29,7 @@ void main() {
         const LobbyPlayer(id: 'h1', name: 'Host', isHost: true, isReady: true);
     LobbyPlayer ready(String id) =>
         LobbyPlayer(id: id, name: id, isReady: true);
-    LobbyPlayer notReady(String id) =>
-        LobbyPlayer(id: id, name: id);
+    LobbyPlayer notReady(String id) => LobbyPlayer(id: id, name: id);
 
     LobbyRoom makeRoom(List<LobbyPlayer> players, {int max = 5}) => LobbyRoom(
           id: 'room1',
@@ -45,7 +45,8 @@ void main() {
     });
 
     test('fromJson maneja LobbyStatus correctamente', () {
-      final starting = makeRoom([host()]).copyWith(status: LobbyStatus.starting);
+      final starting =
+          makeRoom([host()]).copyWith(status: LobbyStatus.starting);
       final restored = LobbyRoom.fromJson(starting.toJson());
       expect(restored.status, equals(LobbyStatus.starting));
     });

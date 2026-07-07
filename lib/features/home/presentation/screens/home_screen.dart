@@ -26,9 +26,7 @@ class HomeScreen extends StatelessWidget {
                 Icons.local_fire_department_rounded,
                 size: 80,
                 color: AppColors.primary,
-              )
-                  .animate()
-                  .scale(
+              ).animate().scale(
                     duration: 600.ms,
                     curve: Curves.elasticOut,
                     begin: const Offset(0.4, 0.4),
@@ -50,9 +48,7 @@ class HomeScreen extends StatelessWidget {
                   color: AppColors.onBackground.withValues(alpha: 0.45),
                   letterSpacing: 1.5,
                 ),
-              )
-                  .animate()
-                  .fadeIn(delay: 350.ms, duration: 400.ms),
+              ).animate().fadeIn(delay: 350.ms, duration: 400.ms),
 
               const Spacer(flex: 3),
 
@@ -85,11 +81,10 @@ class HomeScreen extends StatelessWidget {
                 icon: const Icon(Icons.settings_outlined, size: 18),
                 label: const Text('Ajustes'),
                 style: TextButton.styleFrom(
-                  foregroundColor: AppColors.onBackground.withValues(alpha: 0.65),
+                  foregroundColor:
+                      AppColors.onBackground.withValues(alpha: 0.65),
                 ),
-              )
-                  .animate()
-                  .fadeIn(delay: 740.ms, duration: 400.ms),
+              ).animate().fadeIn(delay: 740.ms, duration: 400.ms),
 
               const Spacer(),
 
@@ -101,9 +96,7 @@ class HomeScreen extends StatelessWidget {
                   fontSize: 10,
                 ),
                 textAlign: TextAlign.center,
-              )
-                  .animate()
-                  .fadeIn(delay: 900.ms, duration: 600.ms),
+              ).animate().fadeIn(delay: 900.ms, duration: 600.ms),
 
               const Gap(8),
             ],

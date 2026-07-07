@@ -25,8 +25,7 @@ import 'package:exploding_kittens/features/lobby/domain/models/discovered_room.d
 // arrived more than ~10 s ago (e.g. the host stopped without sending a
 // LeaveRoom broadcast). A simple Timer.periodic cleanup pass is enough.
 class MdnsDiscoverer {
-  final _roomsController =
-      StreamController<List<DiscoveredRoom>>.broadcast();
+  final _roomsController = StreamController<List<DiscoveredRoom>>.broadcast();
   final _rooms = <String, DiscoveredRoom>{}; // roomId → room
   RawDatagramSocket? _socket;
 
@@ -54,7 +53,8 @@ class MdnsDiscoverer {
 
   void _handleDatagram(Datagram datagram) {
     try {
-      final json = jsonDecode(utf8.decode(datagram.data)) as Map<String, dynamic>;
+      final json =
+          jsonDecode(utf8.decode(datagram.data)) as Map<String, dynamic>;
       if (json['type'] != 'room_beacon') return;
 
       // Trust the beacon's hostAddress; use datagram.address as a fallback

@@ -24,7 +24,8 @@ class SettingsNotifier extends AsyncNotifier<AppSettings> {
   }
 
   Future<void> setPlayerName(String name) => _update(
-        (s) => s.copyWith(playerName: name.trim().isEmpty ? 'Jugador' : name.trim()),
+        (s) => s.copyWith(
+            playerName: name.trim().isEmpty ? 'Jugador' : name.trim()),
         save: (prefs, s) => prefs.setString(_Keys.playerName, s.playerName),
       );
 

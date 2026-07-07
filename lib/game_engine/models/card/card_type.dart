@@ -19,13 +19,14 @@ enum CardType {
   hairyPotatoCat;
 
   bool get isCatCard => switch (this) {
-    tacocat ||
-    rainbowRalphingCat ||
-    beardedDragon ||
-    cattermelon ||
-    hairyPotatoCat => true,
-    _ => false,
-  };
+        tacocat ||
+        rainbowRalphingCat ||
+        beardedDragon ||
+        cattermelon ||
+        hairyPotatoCat =>
+          true,
+        _ => false,
+      };
 
   bool get isPlayable => this != explodingKitten && this != defuse;
 

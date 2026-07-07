@@ -10,8 +10,7 @@ abstract final class NopeRules {
 
   /// ¿Se puede seguir añadiendo Nopes? (ventana abierta y hay acción pendiente)
   static bool canAddNope(GameState state) =>
-      state.pendingAction != null &&
-      state.turn.phase.name == 'nopeWindow';
+      state.pendingAction != null && state.turn.phase.name == 'nopeWindow';
 
   /// Aplica un Nope: incrementa el contador de la cadena.
   static int incrementNopeChain(int current) => current + 1;

@@ -36,10 +36,12 @@ class LobbyInRoom extends LobbyState {
 
   bool get isHost => room.hostId == localPlayerId;
 
-  bool get isLocalPlayerReady => room.players
-      .where((p) => p.id == localPlayerId)
-      .map((p) => p.isReady)
-      .firstOrNull ?? false;
+  bool get isLocalPlayerReady =>
+      room.players
+          .where((p) => p.id == localPlayerId)
+          .map((p) => p.isReady)
+          .firstOrNull ??
+      false;
 }
 
 class LobbyError extends LobbyState {
