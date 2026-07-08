@@ -6,6 +6,7 @@ import 'package:exploding_kittens/features/game/presentation/widgets/deck_widget
 import 'package:exploding_kittens/features/game/presentation/widgets/discard_pile_widget.dart';
 import 'package:exploding_kittens/features/game/presentation/widgets/player_hand_widget.dart';
 import 'package:exploding_kittens/features/game/presentation/widgets/players_hud_widget.dart';
+import 'package:exploding_kittens/features/game/presentation/widgets/see_the_future_overlay.dart';
 import 'package:exploding_kittens/game_engine/models/card/card_model.dart';
 import 'package:exploding_kittens/game_engine/models/card/card_type.dart';
 import 'package:exploding_kittens/game_engine/models/game/game_state.dart';
@@ -51,6 +52,11 @@ class GameTableView extends StatefulWidget {
 class _GameTableViewState extends State<GameTableView> {
   String? _selectedCardId;
 
+  // Descartar el overlay de See the Future es una decisión puramente local
+  // de UI: GameState.seeTheFutureCards solo se limpia cuando el turno
+  // avanza (ver TurnManager.advance), no cuando el jugador ya lo vio.
+  bool _seeTheFutureDismissed = false;
+
   @override
   void didUpdateWidget(covariant GameTableView oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -59,6 +65,12 @@ class _GameTableViewState extends State<GameTableView> {
     final me = widget.gameState.playerById(widget.localPlayerId);
     final stillHeld = me?.hand.any((c) => c.id == _selectedCardId) ?? false;
     if (!stillHeld) _selectedCardId = null;
+
+    // Una nueva revelación (null → no-null) debe volver a mostrarse aunque
+    // la anterior ya se hubiera descartado.
+    final hadReveal = oldWidget.gameState.seeTheFutureCards != null;
+    final hasReveal = widget.gameState.seeTheFutureCards != null;
+    if (!hadReveal && hasReveal) _seeTheFutureDismissed = false;
   }
 
   bool get _isMyTurn =>
@@ -75,66 +87,84 @@ class _GameTableViewState extends State<GameTableView> {
         ? null
         : hand.where((c) => c.id == _selectedCardId).firstOrNull;
     final topDiscard = widget.gameState.deck.topDiscard;
+    final seeTheFutureCards = widget.gameState.seeTheFutureCards;
+    final showSeeTheFuture =
+        seeTheFutureCards != null && !_seeTheFutureDismissed;
 
-    return SafeArea(
-      child: Column(
-        children: [
-          PlayersHudWidget(
-            players: widget.gameState.players,
-            currentPlayerId: widget.gameState.turn.currentPlayerId,
+    return Stack(
+      children: [
+        SafeArea(child: _buildTable(hand, selected, topDiscard)),
+        if (showSeeTheFuture)
+          SeeTheFutureOverlay(
+            topCards: seeTheFutureCards,
+            assetPathFor: widget.assetPathFor,
+            onDismiss: () => setState(() => _seeTheFutureDismissed = true),
           ),
-          _StatusBanner(gameState: widget.gameState, isMyTurn: _isMyTurn),
-          Expanded(
-            child: Center(
-              child: SingleChildScrollView(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    DeckWidget(
-                      drawPileCount: widget.gameState.deck.drawPileCount,
-                      cardBackAssetPath: widget.cardBackAssetPath,
-                      onTap: _canAct ? widget.onDraw : null,
-                    ),
-                    const SizedBox(width: 24),
-                    DiscardPileWidget(
-                      topCard: topDiscard,
-                      topCardAssetPath: topDiscard == null
-                          ? null
-                          : widget.assetPathFor?.call(topDiscard.type),
-                    ),
-                  ],
-                ),
+      ],
+    );
+  }
+
+  Widget _buildTable(
+    List<CardModel> hand,
+    CardModel? selected,
+    CardModel? topDiscard,
+  ) {
+    return Column(
+      children: [
+        PlayersHudWidget(
+          players: widget.gameState.players,
+          currentPlayerId: widget.gameState.turn.currentPlayerId,
+        ),
+        _StatusBanner(gameState: widget.gameState, isMyTurn: _isMyTurn),
+        Expanded(
+          child: Center(
+            child: SingleChildScrollView(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DeckWidget(
+                    drawPileCount: widget.gameState.deck.drawPileCount,
+                    cardBackAssetPath: widget.cardBackAssetPath,
+                    onTap: _canAct ? widget.onDraw : null,
+                  ),
+                  const SizedBox(width: 24),
+                  DiscardPileWidget(
+                    topCard: topDiscard,
+                    topCardAssetPath: topDiscard == null
+                        ? null
+                        : widget.assetPathFor?.call(topDiscard.type),
+                  ),
+                ],
               ),
             ),
           ),
-          if (selected != null)
-            _SelectionBar(
-              card: selected,
-              canPlay: _canAct && _quickPlayTypes.contains(selected.type),
-              onPlay: () {
-                widget.onPlaySimpleCard(selected);
-                setState(() => _selectedCardId = null);
-              },
-              onCancel: () => setState(() => _selectedCardId = null),
-            ),
-          PlayerHandWidget(
-            hand: hand,
-            selectedCardIds:
-                _selectedCardId == null ? const {} : {_selectedCardId!},
-            playableCardIds: _canAct
-                ? hand
-                    .where((c) => _quickPlayTypes.contains(c.type))
-                    .map((c) => c.id)
-                    .toSet()
-                : const {},
-            assetPathFor: widget.assetPathFor,
-            onCardTap: (card) => setState(
-              () =>
-                  _selectedCardId = _selectedCardId == card.id ? null : card.id,
-            ),
+        ),
+        if (selected != null)
+          _SelectionBar(
+            card: selected,
+            canPlay: _canAct && _quickPlayTypes.contains(selected.type),
+            onPlay: () {
+              widget.onPlaySimpleCard(selected);
+              setState(() => _selectedCardId = null);
+            },
+            onCancel: () => setState(() => _selectedCardId = null),
           ),
-        ],
-      ),
+        PlayerHandWidget(
+          hand: hand,
+          selectedCardIds:
+              _selectedCardId == null ? const {} : {_selectedCardId!},
+          playableCardIds: _canAct
+              ? hand
+                  .where((c) => _quickPlayTypes.contains(c.type))
+                  .map((c) => c.id)
+                  .toSet()
+              : const {},
+          assetPathFor: widget.assetPathFor,
+          onCardTap: (card) => setState(
+            () => _selectedCardId = _selectedCardId == card.id ? null : card.id,
+          ),
+        ),
+      ],
     );
   }
 }

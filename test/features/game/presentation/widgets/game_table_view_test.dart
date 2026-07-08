@@ -15,6 +15,7 @@ GameState _state({
   required List<PlayerModel> players,
   required String currentPlayerId,
   TurnPhase phase = TurnPhase.playing,
+  List<CardModel>? seeTheFutureCards,
 }) {
   return GameState(
     id: 'g1',
@@ -23,6 +24,7 @@ GameState _state({
     deck: const DeckModel(drawPile: [], discardPile: []),
     turn: TurnModel(currentPlayerId: currentPlayerId, phase: phase),
     phase: GamePhase.playing,
+    seeTheFutureCards: seeTheFutureCards,
   );
 }
 
@@ -144,6 +146,72 @@ void main() {
         );
         final button = tester.widget<FilledButton>(find.byType(FilledButton));
         expect(button.onPressed, isNull);
+      },
+    );
+
+    testWidgets(
+      'muestra el overlay de See the Future cuando el estado lo trae',
+      (tester) async {
+        const me = PlayerModel(id: 'me', name: 'Ana', hand: []);
+
+        await tester.pumpWidget(
+          _wrap(
+            GameTableView(
+              gameState: _state(
+                players: const [me],
+                currentPlayerId: 'me',
+                seeTheFutureCards: const [
+                  CardModel(id: 'a', type: CardType.skip),
+                  CardModel(id: 'b', type: CardType.attack),
+                  CardModel(id: 'c', type: CardType.nope),
+                ],
+              ),
+              localPlayerId: 'me',
+              onDraw: () {},
+              onPlaySimpleCard: (_) {},
+            ),
+          ),
+        );
+
+        expect(find.text('Ves las próximas 3 cartas'), findsOneWidget);
+        expect(find.text('Continuar'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'descartar el overlay lo oculta hasta la próxima revelación',
+      (tester) async {
+        const me = PlayerModel(id: 'me', name: 'Ana', hand: []);
+        const reveal = [CardModel(id: 'a', type: CardType.skip)];
+
+        Widget build(List<CardModel>? cards) => _wrap(
+              GameTableView(
+                gameState: _state(
+                  players: const [me],
+                  currentPlayerId: 'me',
+                  seeTheFutureCards: cards,
+                ),
+                localPlayerId: 'me',
+                onDraw: () {},
+                onPlaySimpleCard: (_) {},
+              ),
+            );
+
+        await tester.pumpWidget(build(reveal));
+        expect(find.text('Continuar'), findsOneWidget);
+
+        await tester.tap(find.text('Continuar'));
+        await tester.pump();
+        expect(find.text('Continuar'), findsNothing);
+
+        // La misma revelación (sin pasar por null) sigue descartada.
+        await tester.pumpWidget(build(reveal));
+        expect(find.text('Continuar'), findsNothing);
+
+        // Una revelación nueva (null → no-null) vuelve a mostrarse.
+        await tester.pumpWidget(build(null));
+        await tester.pumpWidget(build(reveal));
+        expect(find.text('Continuar'), findsOneWidget);
       },
     );
   });
