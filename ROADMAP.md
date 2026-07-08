@@ -64,7 +64,7 @@ empezar la siguiente.
 - [x] `PlayersHudWidget` — avatares de jugadores con contador de cartas
 - [ ] `NopeWindowOverlay` — temporizador visual con botón reactivo
 - [ ] `InsertBombOverlay` — selector de posición al usar Defuse
-- [ ] `SeeTheFutureOverlay` — visualización de top 3 cartas
+- [x] `SeeTheFutureOverlay` — visualización de top 3 cartas, visibilidad derivada de `GameState.seeTheFutureCards`, descartado como estado local de UI
 - [ ] `FavorTargetOverlay` — selector de objetivo
 - [ ] `ExplosionOverlay` — animación Lottie de explosión
 - [ ] `GameOverScreen` — resultado, ranking y opción de revancha

@@ -11,6 +11,15 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.3.6] — 2026-07-07
+
+### Añadido — Fase 4: primer overlay (See the Future)
+- **`SeeTheFutureOverlay`** — muestra las 3 cartas de arriba del mazo (de arriba hacia abajo) con los placeholders de `CardVisuals`, y un botón "Continuar" para cerrarlo
+- `GameTableView` deriva su visibilidad de `GameState.seeTheFutureCards` (sin nuevo estado en el provider); el "descartado" es estado local de UI, porque el campo solo se limpia cuando el turno avanza (`TurnManager.advance`), no cuando el jugador ya lo vio — una revelación nueva (null → no-null) vuelve a mostrarlo aunque la anterior ya estuviera cerrada
+- 4 tests nuevos (`SeeTheFutureOverlay` + integración en `GameTableView`) — 92 tests totales pasando
+
+---
+
 ## [0.3.5] — 2026-07-07
 
 ### Añadido — Fase 4: GameScreen conectado
