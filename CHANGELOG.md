@@ -11,6 +11,19 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.3.4] — 2026-07-07
+
+### Añadido — Fase 4: widgets de mesa
+- **`CardWidget`** — carta individual con flip animado (boca arriba/abajo), glow cuando es jugable, borde de selección; usa el placeholder de `CardVisuals` si `assetPath` es `null`
+- **`DeckWidget`** — dorso del mazo con contador de cartas restantes
+- **`DiscardPileWidget`** / **`DottedCardSlot`** — última carta descartada boca arriba, o hueco vacío si aún no se descartó nada
+- **`PlayersHudWidget`** — avatares de todos los jugadores con nombre y contador de cartas; atenúa a los eliminados y resalta a quien tiene el turno
+- **`PlayerHandWidget`** — mano del jugador local en abanico, selección por tap (no drag & drop, necesario igualmente para elegir pares/tríos de gato)
+- Todos son widgets "tontos": reciben datos ya resueltos (tipo de carta, ruta de asset, callbacks) y no leen providers — se pueden testear con fixtures sin `ProviderScope`
+- 12 tests nuevos de widgets — 81 tests totales pasando
+
+---
+
 ## [0.3.3] — 2026-07-07
 
 ### Añadido — Fase 4: fundamentos (CardAssetResolver + GameNotifier)

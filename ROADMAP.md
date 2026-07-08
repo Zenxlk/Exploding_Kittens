@@ -57,11 +57,11 @@ empezar la siguiente.
 - [x] `CardAssetResolver` / `CardVisuals` — resuelve el asset real de una carta desde el `AssetManifest` si ya existe, o cae a un placeholder (color + icono + nombre) por `CardType`; permite ir soltando arte final carta por carta sin tocar widgets
 - [x] `GameStateProvider` — implementado como `GameNotifier` / `gameProvider` (`Notifier<GameSessionState>`, no `StateNotifier`, siguiendo el patrón ya usado por `lobbyProvider`), con `IGameGateway`/`LocalGameGateway` de por medio para poder enchufar un gateway remoto en Fase 5 sin tocar la UI
 - [ ] `GameScreen` — layout adaptativo portrait/landscape
-- [ ] `PlayerHandWidget` — fan de cartas con drag & drop
-- [ ] `CardWidget` — flip animation, glow en cartas jugables
-- [ ] `DeckWidget` — contador de cartas con animación de robo
-- [ ] `DiscardPileWidget` — pila de descarte con última carta visible
-- [ ] `PlayersHudWidget` — avatares de oponentes con contador de cartas
+- [x] `PlayerHandWidget` — fan de cartas, selección por tap (se descartó drag & drop: más simple y necesario igual para pares/tríos de gato)
+- [x] `CardWidget` — flip animation, glow en cartas jugables
+- [x] `DeckWidget` — contador de cartas (sin animación de robo todavía: se hará en Fase de overlays/eventos, diferenciando carta robada por diff de longitud de mano)
+- [x] `DiscardPileWidget` — pila de descarte con última carta visible
+- [x] `PlayersHudWidget` — avatares de jugadores con contador de cartas
 - [ ] `NopeWindowOverlay` — temporizador visual con botón reactivo
 - [ ] `InsertBombOverlay` — selector de posición al usar Defuse
 - [ ] `SeeTheFutureOverlay` — visualización de top 3 cartas
