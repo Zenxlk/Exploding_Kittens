@@ -1,0 +1,64 @@
+import 'package:exploding_kittens/features/game/presentation/widgets/players_hud_widget.dart';
+import 'package:exploding_kittens/game_engine/models/player/player_model.dart';
+import 'package:exploding_kittens/game_engine/models/player/player_status.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
+
+void main() {
+  group('PlayersHudWidget', () {
+    testWidgets('muestra nombre y cantidad de cartas de cada jugador', (
+      tester,
+    ) async {
+      const players = [
+        PlayerModel(
+          id: 'p1',
+          name: 'Ana',
+          hand: [],
+        ),
+        PlayerModel(
+          id: 'p2',
+          name: 'Beto',
+          hand: [],
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _wrap(
+          const PlayersHudWidget(players: players, currentPlayerId: 'p1'),
+        ),
+      );
+
+      expect(find.text('Ana'), findsOneWidget);
+      expect(find.text('Beto'), findsOneWidget);
+    });
+
+    testWidgets('atenúa a los jugadores eliminados', (tester) async {
+      const players = [
+        PlayerModel(
+          id: 'p1',
+          name: 'Ana',
+          hand: [],
+          status: PlayerStatus.eliminated,
+        ),
+        PlayerModel(id: 'p2', name: 'Beto', hand: []),
+      ];
+
+      await tester.pumpWidget(
+        _wrap(
+          const PlayersHudWidget(players: players, currentPlayerId: 'p2'),
+        ),
+      );
+
+      final anaOpacity = tester.widget<Opacity>(
+        find.ancestor(of: find.text('Ana'), matching: find.byType(Opacity)),
+      );
+      final betoOpacity = tester.widget<Opacity>(
+        find.ancestor(of: find.text('Beto'), matching: find.byType(Opacity)),
+      );
+      expect(anaOpacity.opacity, lessThan(1.0));
+      expect(betoOpacity.opacity, 1.0);
+    });
+  });
+}
