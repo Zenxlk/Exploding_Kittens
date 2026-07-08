@@ -11,6 +11,19 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.3.5] — 2026-07-07
+
+### Añadido — Fase 4: GameScreen conectado
+- **`GameTableView`** — composición de mesa (HUD + mazo + descarte + mano + banner de estado); solo muestra y controla la mano del **jugador local** (no la de quien tenga el turno), pensado para que cada dispositivo conectado a la sala sea dueño de un único jugador. Selección de carta por tap y botón "Jugar" para las cartas sin objetivo (Attack, Skip, Shuffle, See the Future); Favor/pares-tríos de gato/Nope/Defuse muestran "se juega en el próximo paso" hasta los overlays de selección de objetivo
+- **`GameScreen`** conectado a `gameProvider` y `lobbyProvider`: solo el host arranca hoy el `GameEngine` real (vía `LocalGameGateway`) al entrar a la sala; los no-host ven "Esperando sincronización con el host… (llega en la Fase 5)" — sincronizar el estado real por red es explícitamente Fase 5, no se simula
+- Navega a `GameOverScreen` automáticamente cuando el `GameState` llega a `GamePhase.finished`
+- 7 tests nuevos (`GameTableView` + `GameScreen` con lobby/gateway fake) — 88 tests totales pasando
+
+### Verificado
+- App compilada y lanzada en un dispositivo Android real (`flutter run`): arranca sin errores hasta `HomeScreen`. No fue posible automatizar taps con ADB (el dispositivo no concede `INJECT_EVENTS`), así que el flujo Lobby → GameScreen no se probó de punta a punta en este dispositivo — requiere además un segundo dispositivo real en la misma red para completar el lobby (`GameConstants.minPlayers = 2`)
+
+---
+
 ## [0.3.4] — 2026-07-07
 
 ### Añadido — Fase 4: widgets de mesa
