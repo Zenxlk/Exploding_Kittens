@@ -11,6 +11,18 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.3.12] — 2026-07-08
+
+### Añadido — Fase 4: audioplayers (efectos y música)
+- **`IAudioService`/`AudioService`** (`core/audio/`) — dos reproductores independientes (efectos vs. música en loop) sobre `audioplayers`; los fallos de reproducción se capturan y loguean en vez de propagarse, para que un audio faltante o sin salida de sonido no interrumpa la partida. Expuesto vía `audioServiceProvider`, sustituible por un fake en tests de widgets
+- **`GameSoundController`** — se suscribe al `Stream<GameEvent>` del motor (nuevo getter `GameNotifier.events`) mientras dura la partida y reproduce el efecto de cada evento (`soundAssetFor`, función pura testeada aparte): robar, jugar carta (Attack tiene su propio clip), barajar, bomba activada, Defuse, Nope, fin de partida. `PlayerEliminatedEvent` no suena aparte a propósito — se emite junto a `BombTriggeredEvent` en el mismo instante y sonarían duplicados
+- `GameScreen` reproduce `music_ingame.mp3` y `GameOverScreen` reproduce `music_gameover.mp3` en loop mientras están montadas, resincronizando volumen/activado cuando cambian los ajustes
+- Corrección de `AssetPaths`: los nombres de sonido no coincidían con los archivos reales de `assets/sounds/` (`card_draw.mp3` → `draw_card.mp3`, `explosion.mp3` → `explode.mp3`, etc.); Defuse y "jugador eliminado" reusan `countdown.mp3`/`explode.mp3` porque no tienen clip propio todavía (ver `ATTRIBUTION.md`)
+- 4 tests nuevos (`soundAssetFor` + `GameSoundController` con un `IAudioService` fake) — 111 tests totales pasando
+- **Fuera de alcance esta vez**: música de menú (`music_menu.mp3`) en Home/Splash/Lobby/Settings — queda anotada en el Roadmap (Fase 6), no es parte de "pantalla de juego completa"
+
+---
+
 ## [0.3.11] — 2026-07-08
 
 ### Añadido — Fase 4: GameOverScreen

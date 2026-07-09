@@ -68,7 +68,7 @@ empezar la siguiente.
 - [x] `FavorTargetOverlay` — selector de objetivo para Favor y pares de gato; el trío de gatos queda diferido (necesita elegir una carta concreta de la mano rival, que el actor no puede ver — hace falta su propio diseño de UI)
 - [x] `ExplosionOverlay` — animación de eliminación (placeholder con Flutter puro, escala con rebote; se reemplazará por el Lottie real de `AssetPaths.animExplosion` cuando exista ese asset); se detecta por diff de `GameState` (un jugador que estaba vivo deja de estarlo), se cierra sola sin acción del jugador
 - [x] `GameOverScreen` — ganador, ranking en orden real de eliminación (fix de `WinCondition`/nuevo `GameState.eliminationOrder`: antes seguía el orden de la lista de jugadores, no el cronológico) y botón de revancha, solo para el host (mismo límite que `GameScreen` hoy); revancha re-arranca el mismo `GameEngine`/bus con los jugadores de la sala actual
-- [ ] Integración de `audioplayers` (efectos y música de fondo)
+- [x] Integración de `audioplayers` (efectos y música de fondo) — `IAudioService`/`AudioService` (interfaz + impl, testeable con fake), `GameSoundController` reproduce el efecto de cada `GameEvent` del motor mientras dura la partida, `GameScreen`/`GameOverScreen` reproducen `music_ingame.mp3`/`music_gameover.mp3` en loop. De paso se corrigieron los nombres de archivo en `AssetPaths` (no coincidían con los reales en `assets/sounds/`). **Alcance de esta pasada**: solo pantallas de partida; `music_menu.mp3` para Home/Splash/Lobby/Settings queda pendiente (no es parte de "pantalla de juego completa")
 - [ ] Integración de `flutter_animate` en cartas y transiciones
 - [ ] Tests de providers y casos de uso
 
@@ -92,6 +92,7 @@ empezar la siguiente.
 - [ ] Migrar `MdnsAdvertiser` / `MdnsDiscoverer` de UDP broadcast a mDNS/Bonjour real (`nsd` o `multicast_dns`)
 - [ ] `WifiManager.MulticastLock` vía platform channel en Android 10+
 - [ ] Persistir `playerId` con `shared_preferences` para reconexión tras crash
+- [ ] Reproducir `AssetPaths.musicMenu` en Home/Splash/Lobby/Settings (hoy solo `GameScreen`/`GameOverScreen` tienen música vía `AudioService`)
 
 ### Bots / modo offline
 - [ ] Interfaz `BotStrategy` con implementación básica (aleatoria)

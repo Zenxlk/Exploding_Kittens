@@ -163,3 +163,30 @@ Tampoco se corrió en emulador en esta sesión. Pasos:
    nueva (mazo repartido de cero) usando los mismos jugadores de la sala.
 4. Confirmar que un jugador no-host en la misma pantalla no ve el botón
    "Revancha", solo el mensaje de espera.
+
+---
+
+## Fase 4 — audioplayers: efectos y música (pendiente de verificación manual)
+
+Este es el primer punto de esta sesión donde SÍ importa correr la app de
+verdad — los tests con fake `IAudioService` no prueban que `audioplayers`
+reproduzca los archivos reales en un dispositivo/emulador. Pasos:
+
+1. En Ajustes, confirmar que "Efectos de sonido" y "Música" (con su
+   volumen) están activados, y entrar a una partida.
+2. Confirmar que suena `music_ingame.mp3` en loop apenas entra `GameScreen`.
+3. Robar una carta (debe sonar `draw_card.mp3`), jugar Attack (`atack.mp3`,
+   distinto del resto de cartas que suenan `play_card.mp3`), barajar con
+   Shuffle (`shuffle_deck.mp3`).
+4. Provocar una ventana de Nope y jugarlo: debe sonar `nope.mp3`.
+5. Robar una Exploding Kitten: debe sonar `explode.mp3` una sola vez (no
+   dos), tanto si se defusa como si elimina al jugador. Al defusar, además
+   debe sonar `countdown.mp3` (clip prestado, no hay uno propio todavía).
+6. Terminar la partida: debe sonar `win.mp3` y, en `GameOverScreen`, música
+   `music_gameover.mp3` en loop reemplazando a la de partida.
+7. Cambiar volumen/activar-desactivar sonido o música desde Ajustes
+   **mientras la partida sigue abierta** (sin salir de `GameScreen`) y
+   confirmar que el cambio se aplica sin tener que reiniciar la pantalla.
+8. Si algo no suena, revisar la consola en busca de logs
+   `[W][AudioService]` — la app no debe crashear ni bloquearse por un
+   fallo de audio.
