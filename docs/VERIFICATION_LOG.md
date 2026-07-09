@@ -108,3 +108,25 @@ pendiente), probar que *otro* jugador cancele la carta requiere que ese mismo
 dispositivo host controle temporalmente la mano de ambos jugadores o esperar
 a la sincronización por red — no es un caso cubierto todavía por este flujo
 manual de un solo dispositivo.
+
+---
+
+## Fase 4 — InsertBombOverlay (pendiente de verificación manual)
+
+Tampoco se corrió en emulador en esta sesión, mismo motivo que arriba. Pasos:
+
+1. Como host, robar cartas hasta sacar una Exploding Kitten teniendo un
+   Defuse en mano (o forzarlo colocando el mazo a mano si se quiere apurar
+   la prueba).
+2. Confirmar que aparece el overlay "¿Dónde escondes la bomba?" con un
+   slider entre "Arriba del todo" y "Abajo del todo".
+3. Mover el slider y confirmar con "Esconder bomba": el mazo debe quedar con
+   la misma cantidad de cartas de antes de robar (la bomba se reinsertó, no
+   desapareció ni se duplicó) y el turno debe avanzar al siguiente jugador.
+4. Repetir eligiendo la posición 0 (arriba del todo) y volver a robar de
+   inmediato en el siguiente turno propio: debe salir la misma bomba otra
+   vez.
+
+Limitación conocida: igual que con `NopeWindowOverlay`, verificar el punto de
+vista del jugador no-host (que solo debería ver "Esperando a que \<jugador\>
+esconda la bomba…") requiere Fase 5 o controlar ambas manos desde el host.

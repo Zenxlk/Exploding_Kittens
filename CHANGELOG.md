@@ -11,6 +11,16 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.3.9] — 2026-07-08
+
+### Añadido — Fase 4: InsertBombOverlay
+- **`InsertBombOverlay`** — se muestra mientras `TurnModel.phase == TurnPhase.resolving` y `GameState.pendingBomb != null`, solo al jugador que robó la bomba; `Slider` para elegir la posición de reinserción entre 0 (arriba del todo, la próxima carta que se robaría) y `drawPileCount` (abajo del todo) — el motor (`DeckManager.insertAt`) ya clampaba cualquier valor, así que no hace falta validación extra en la UI
+- `GameTableView` gana el callback `onDefuseBomb`, conectado en `GameScreen` a `gameProvider.notifier.defuse(...)` (ya existía en el notifier, sin cambios de engine); toma la primera carta Defuse de la mano, garantizada por el invariante del motor (solo se llega a `resolving` si el jugador tiene Defuse)
+- Banner de estado actualizado: mientras se resuelve la bomba, los demás jugadores ven "Esperando a que \<jugador\> esconda la bomba…" en vez del texto genérico anterior
+- 2 tests nuevos (`GameTableView`: overlay se muestra y confirma con la posición elegida; no se muestra al jugador que no tiene el turno) — 100 tests totales pasando
+
+---
+
 ## [0.3.8] — 2026-07-08
 
 ### Añadido — Fase 4: NopeWindowOverlay
