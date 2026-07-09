@@ -11,6 +11,20 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.3.11] — 2026-07-08
+
+### Añadido — Fase 4: GameOverScreen
+- **`GameOverScreen`** ahora es un `ConsumerWidget` real: muestra el nombre del ganador, turnos jugados y el ranking completo (ganador primero, luego el orden inverso de eliminación real — el último en explotar queda 2º, el primero en explotar queda último), cruzando `GameResult.eliminationOrder` con los nombres de `lobbyProvider`
+- Botón **Revancha** solo para el host (mismo límite que `GameScreen`: solo el host corre el `GameEngine` real hasta la Fase 5); re-arranca la partida con `startLocalGame` reusando los jugadores actuales de la sala y el mismo `GameEventBus`
+- Ruta `/game/over` deja de depender de un query param `winnerId` — lee el resultado directo de `gameProvider` (`GameFinished`), evitando duplicar estado que ya vive en el provider
+- 3 tests nuevos (`GameOverScreen`: sin resultado, ranking + revancha visible para el host, oculto para no-host)
+
+### Corregido — orden de eliminación
+- `WinCondition.check` construía `GameResult.eliminationOrder` filtrando `GameState.players`, que sigue el orden de la lista, no el orden real en que los jugadores explotaron — un bug ya detectado durante la planificación de Fase 4 pero sin arreglar hasta que `GameOverScreen` lo necesitó de verdad. `GameState` gana un campo `eliminationOrder` que `ActionProcessor._eliminatePlayer` va llenando en el momento exacto de cada eliminación; `WinCondition` solo lo reexpone
+- 1 test nuevo (`ActionProcessor`: el orden de eliminación es cronológico, no el de la lista de jugadores) — 106 tests totales pasando
+
+---
+
 ## [0.3.10] — 2026-07-08
 
 ### Añadido — Fase 4: ExplosionOverlay

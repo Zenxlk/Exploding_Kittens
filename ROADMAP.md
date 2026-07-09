@@ -67,7 +67,7 @@ empezar la siguiente.
 - [x] `SeeTheFutureOverlay` — visualización de top 3 cartas, visibilidad derivada de `GameState.seeTheFutureCards`, descartado como estado local de UI
 - [x] `FavorTargetOverlay` — selector de objetivo para Favor y pares de gato; el trío de gatos queda diferido (necesita elegir una carta concreta de la mano rival, que el actor no puede ver — hace falta su propio diseño de UI)
 - [x] `ExplosionOverlay` — animación de eliminación (placeholder con Flutter puro, escala con rebote; se reemplazará por el Lottie real de `AssetPaths.animExplosion` cuando exista ese asset); se detecta por diff de `GameState` (un jugador que estaba vivo deja de estarlo), se cierra sola sin acción del jugador
-- [ ] `GameOverScreen` — resultado, ranking y opción de revancha
+- [x] `GameOverScreen` — ganador, ranking en orden real de eliminación (fix de `WinCondition`/nuevo `GameState.eliminationOrder`: antes seguía el orden de la lista de jugadores, no el cronológico) y botón de revancha, solo para el host (mismo límite que `GameScreen` hoy); revancha re-arranca el mismo `GameEngine`/bus con los jugadores de la sala actual
 - [ ] Integración de `audioplayers` (efectos y música de fondo)
 - [ ] Integración de `flutter_animate` en cartas y transiciones
 - [ ] Tests de providers y casos de uso

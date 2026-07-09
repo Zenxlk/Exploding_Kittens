@@ -146,3 +146,20 @@ Tampoco se corrió en emulador en esta sesión, mismo motivo que arriba. Pasos:
    siguiente jugador vivo.
 4. Si era el único jugador que quedaba vivo aparte del ganador, confirmar
    que tras el overlay se navega a `GameOverScreen`.
+
+---
+
+## Fase 4 — GameOverScreen (pendiente de verificación manual)
+
+Tampoco se corrió en emulador en esta sesión. Pasos:
+
+1. Terminar una partida de 3+ jugadores (jugar hasta que solo quede uno
+   vivo) y confirmar que se navega solo a `GameOverScreen` con el nombre
+   del ganador y el conteo de turnos.
+2. Confirmar que el ranking lista primero al ganador y luego a los
+   eliminados en orden **inverso** al que explotaron (el penúltimo en
+   quedar vivo aparece 2º, el primero en explotar aparece último).
+3. Como host, tocar "Revancha": debe volver a `GameScreen` con una partida
+   nueva (mazo repartido de cero) usando los mismos jugadores de la sala.
+4. Confirmar que un jugador no-host en la misma pantalla no ve el botón
+   "Revancha", solo el mensaje de espera.
