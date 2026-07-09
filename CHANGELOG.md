@@ -11,6 +11,14 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.3.13] — 2026-07-08
+
+### Añadido — Fase 4: tests de providers
+- `GameNotifier` — un test por método de intención (`playCard`, `playFavor`, `playCatPair`, `playCatTrio`, `playNope`, `defuse`) que verifica el `TurnAction` concreto construido y sus campos, más un test del nuevo getter `events`. Antes solo se probaba el camino genérico de `_apply` (error/éxito/fin de partida) a través de `drawCard`, sin confirmar que el resto de métodos arman la acción correcta
+- 118 tests totales pasando
+
+---
+
 ## [0.3.12] — 2026-07-08
 
 ### Añadido — Fase 4: audioplayers (efectos y música)

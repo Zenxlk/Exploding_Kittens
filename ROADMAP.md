@@ -70,7 +70,7 @@ empezar la siguiente.
 - [x] `GameOverScreen` — ganador, ranking en orden real de eliminación (fix de `WinCondition`/nuevo `GameState.eliminationOrder`: antes seguía el orden de la lista de jugadores, no el cronológico) y botón de revancha, solo para el host (mismo límite que `GameScreen` hoy); revancha re-arranca el mismo `GameEngine`/bus con los jugadores de la sala actual
 - [x] Integración de `audioplayers` (efectos y música de fondo) — `IAudioService`/`AudioService` (interfaz + impl, testeable con fake), `GameSoundController` reproduce el efecto de cada `GameEvent` del motor mientras dura la partida, `GameScreen`/`GameOverScreen` reproducen `music_ingame.mp3`/`music_gameover.mp3` en loop. De paso se corrigieron los nombres de archivo en `AssetPaths` (no coincidían con los reales en `assets/sounds/`). **Alcance de esta pasada**: solo pantallas de partida; `music_menu.mp3` para Home/Splash/Lobby/Settings queda pendiente (no es parte de "pantalla de juego completa")
 - [ ] Integración de `flutter_animate` en cartas y transiciones
-- [ ] Tests de providers y casos de uso
+- [x] Tests de providers y casos de uso — `GameNotifier`: un test por método (`playCard`/`playFavor`/`playCatPair`/`playCatTrio`/`playNope`/`defuse`) verificando el `TurnAction` concreto que dispatchea, más el nuevo getter `events`; 118 tests totales pasando
 
 ---
 
