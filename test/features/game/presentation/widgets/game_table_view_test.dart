@@ -18,12 +18,20 @@ GameState _state({
   int nopeChainCount = 0,
   List<CardModel>? seeTheFutureCards,
   Object? pendingAction,
+  CardModel? pendingBomb,
+  int drawPileCount = 0,
 }) {
   return GameState(
     id: 'g1',
     config: const GameConfig(playerCount: 2),
     players: players,
-    deck: const DeckModel(drawPile: [], discardPile: []),
+    deck: DeckModel(
+      drawPile: List.generate(
+        drawPileCount,
+        (i) => CardModel(id: 'draw$i', type: CardType.skip),
+      ),
+      discardPile: const [],
+    ),
     turn: TurnModel(
       currentPlayerId: currentPlayerId,
       phase: phase,
@@ -32,6 +40,7 @@ GameState _state({
     phase: GamePhase.playing,
     seeTheFutureCards: seeTheFutureCards,
     pendingAction: pendingAction,
+    pendingBomb: pendingBomb,
   );
 }
 
@@ -66,6 +75,7 @@ void main() {
             onPlayFavor: (_, __) {},
             onPlayCatPair: (_, __) {},
             onPlayNope: (_) {},
+            onDefuseBomb: (_, __) {},
           ),
         ),
       );
@@ -95,6 +105,7 @@ void main() {
             onPlayFavor: (_, __) {},
             onPlayCatPair: (_, __) {},
             onPlayNope: (_) {},
+            onDefuseBomb: (_, __) {},
           ),
         ),
       );
@@ -120,6 +131,7 @@ void main() {
               onPlayFavor: (_, __) {},
               onPlayCatPair: (_, __) {},
               onPlayNope: (_) {},
+              onDefuseBomb: (_, __) {},
             ),
           ),
         );
@@ -152,6 +164,7 @@ void main() {
               onPlayFavor: (_, __) {},
               onPlayCatPair: (_, __) {},
               onPlayNope: (_) {},
+              onDefuseBomb: (_, __) {},
             ),
           ),
         );
@@ -184,6 +197,7 @@ void main() {
               onPlayFavor: (_, __) {},
               onPlayCatPair: (_, __) {},
               onPlayNope: (_) {},
+              onDefuseBomb: (_, __) {},
             ),
           ),
         );
@@ -223,6 +237,7 @@ void main() {
               },
               onPlayCatPair: (_, __) {},
               onPlayNope: (_) {},
+              onDefuseBomb: (_, __) {},
             ),
           ),
         );
@@ -271,6 +286,7 @@ void main() {
                 targetId = target;
               },
               onPlayNope: (_) {},
+              onDefuseBomb: (_, __) {},
             ),
           ),
         );
@@ -312,6 +328,7 @@ void main() {
               onPlayFavor: (_, __) {},
               onPlayCatPair: (_, __) {},
               onPlayNope: (_) {},
+              onDefuseBomb: (_, __) {},
             ),
           ),
         );
@@ -353,6 +370,7 @@ void main() {
               onPlayFavor: (_, __) {},
               onPlayCatPair: (_, __) {},
               onPlayNope: (_) {},
+              onDefuseBomb: (_, __) {},
             ),
           ),
         );
@@ -381,6 +399,7 @@ void main() {
                 onPlayFavor: (_, __) {},
                 onPlayCatPair: (_, __) {},
                 onPlayNope: (_) {},
+                onDefuseBomb: (_, __) {},
               ),
             );
 
@@ -425,6 +444,7 @@ void main() {
               onPlayFavor: (_, __) {},
               onPlayCatPair: (_, __) {},
               onPlayNope: (card) => played = card,
+              onDefuseBomb: (_, __) {},
             ),
           ),
         );
@@ -456,6 +476,7 @@ void main() {
               onPlayFavor: (_, __) {},
               onPlayCatPair: (_, __) {},
               onPlayNope: (_) {},
+              onDefuseBomb: (_, __) {},
             ),
           ),
         );
@@ -464,6 +485,84 @@ void main() {
           find.widgetWithText(FilledButton, '¡Nope!'),
         );
         expect(button.onPressed, isNull);
+      },
+    );
+
+    testWidgets(
+      'muestra el overlay de esconder bomba y confirmar invoca onDefuseBomb',
+      (tester) async {
+        const defuse = CardModel(id: 'a', type: CardType.defuse);
+        const me = PlayerModel(id: 'me', name: 'Ana', hand: [defuse]);
+        CardModel? defusedCard;
+        int? position;
+
+        await tester.pumpWidget(
+          _wrap(
+            GameTableView(
+              gameState: _state(
+                players: const [me],
+                currentPlayerId: 'me',
+                phase: TurnPhase.resolving,
+                pendingBomb: const CardModel(
+                  id: 'bomb',
+                  type: CardType.explodingKitten,
+                ),
+                drawPileCount: 4,
+              ),
+              localPlayerId: 'me',
+              onDraw: () {},
+              onPlaySimpleCard: (_) {},
+              onPlayFavor: (_, __) {},
+              onPlayCatPair: (_, __) {},
+              onPlayNope: (_) {},
+              onDefuseBomb: (card, pos) {
+                defusedCard = card;
+                position = pos;
+              },
+            ),
+          ),
+        );
+
+        expect(find.text('¿Dónde escondes la bomba?'), findsOneWidget);
+        expect(find.text('Abajo del todo'), findsOneWidget);
+
+        await tester.tap(find.text('Esconder bomba'));
+        expect(defusedCard, defuse);
+        expect(position, 4);
+      },
+    );
+
+    testWidgets(
+      'no soy yo quien resuelve la bomba: no muestro el overlay',
+      (tester) async {
+        const me = PlayerModel(id: 'me', name: 'Ana', hand: []);
+        const other = PlayerModel(id: 'other', name: 'Beto', hand: []);
+
+        await tester.pumpWidget(
+          _wrap(
+            GameTableView(
+              gameState: _state(
+                players: const [me, other],
+                currentPlayerId: 'other',
+                phase: TurnPhase.resolving,
+                pendingBomb: const CardModel(
+                  id: 'bomb',
+                  type: CardType.explodingKitten,
+                ),
+              ),
+              localPlayerId: 'me',
+              onDraw: () {},
+              onPlaySimpleCard: (_) {},
+              onPlayFavor: (_, __) {},
+              onPlayCatPair: (_, __) {},
+              onPlayNope: (_) {},
+              onDefuseBomb: (_, __) {},
+            ),
+          ),
+        );
+
+        expect(find.text('¿Dónde escondes la bomba?'), findsNothing);
+        expect(find.textContaining('esconda la bomba'), findsOneWidget);
       },
     );
   });

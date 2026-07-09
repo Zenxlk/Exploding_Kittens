@@ -6,6 +6,7 @@ import 'package:exploding_kittens/core/theme/app_text_styles.dart';
 import 'package:exploding_kittens/features/game/presentation/widgets/deck_widget.dart';
 import 'package:exploding_kittens/features/game/presentation/widgets/discard_pile_widget.dart';
 import 'package:exploding_kittens/features/game/presentation/widgets/favor_target_overlay.dart';
+import 'package:exploding_kittens/features/game/presentation/widgets/insert_bomb_overlay.dart';
 import 'package:exploding_kittens/features/game/presentation/widgets/nope_window_overlay.dart';
 import 'package:exploding_kittens/features/game/presentation/widgets/player_hand_widget.dart';
 import 'package:exploding_kittens/features/game/presentation/widgets/players_hud_widget.dart';
@@ -101,6 +102,7 @@ class GameTableView extends StatefulWidget {
     required this.onPlayFavor,
     required this.onPlayCatPair,
     required this.onPlayNope,
+    required this.onDefuseBomb,
     this.assetPathFor,
     this.cardBackAssetPath,
   });
@@ -113,6 +115,7 @@ class GameTableView extends StatefulWidget {
   final void Function(List<CardModel> cards, String targetPlayerId)
       onPlayCatPair;
   final ValueChanged<CardModel> onPlayNope;
+  final void Function(CardModel defuseCard, int insertAtPosition) onDefuseBomb;
   final String? Function(CardType type)? assetPathFor;
   final String? cardBackAssetPath;
 
@@ -194,6 +197,9 @@ class _GameTableViewState extends State<GameTableView> {
         seeTheFutureCards != null && !_seeTheFutureDismissed;
     final nopeWindowOpen = widget.gameState.turn.phase == TurnPhase.nopeWindow;
     final myNopeCards = hand.where((c) => c.type == CardType.nope).toList();
+    final resolvingMyBomb = _isMyTurn &&
+        widget.gameState.turn.phase == TurnPhase.resolving &&
+        widget.gameState.pendingBomb != null;
 
     return Stack(
       children: [
@@ -211,6 +217,14 @@ class _GameTableViewState extends State<GameTableView> {
             canPlayNope: myNopeCards.isNotEmpty &&
                 widget.gameState.pendingAction != null,
             onPlayNope: () => widget.onPlayNope(myNopeCards.first),
+          ),
+        if (resolvingMyBomb)
+          InsertBombOverlay(
+            drawPileCount: widget.gameState.deck.drawPileCount,
+            onConfirm: (position) => widget.onDefuseBomb(
+              hand.firstWhere((c) => c.type == CardType.defuse),
+              position,
+            ),
           ),
         if (_choosingTarget && selection is _NeedsTargetSelection)
           FavorTargetOverlay(
@@ -303,8 +317,9 @@ class _StatusBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = switch (gameState.turn.phase) {
       TurnPhase.nopeWindow => 'Ventana de Nope abierta…',
-      TurnPhase.resolving =>
-        'Resolviendo Defuse (el selector llega en el próximo paso)',
+      TurnPhase.resolving when !isMyTurn =>
+        'Esperando a que ${gameState.currentPlayer?.name ?? '…'} '
+            'esconda la bomba…',
       _ when !isMyTurn => 'Turno de ${gameState.currentPlayer?.name ?? '…'}',
       _ => null,
     };

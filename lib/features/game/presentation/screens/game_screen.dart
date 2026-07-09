@@ -94,6 +94,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             onPlayNope: (card) => ref
                 .read(gameProvider.notifier)
                 .playNope(lobbyState.localPlayerId, card),
+            onDefuseBomb: (card, position) => ref
+                .read(gameProvider.notifier)
+                .defuse(lobbyState.localPlayerId, card, position),
             assetPathFor: resolver?.faceAssetFor,
             cardBackAssetPath: resolver?.cardBackAsset(),
           ),
