@@ -47,9 +47,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   @override
   Widget build(BuildContext context) {
     ref.listen<GameSessionState>(gameProvider, (_, next) {
-      if (next case GameFinished(:final result)) {
-        context.go('${RouteNames.gameOver}?winnerId=${result.winnerId}');
-      }
+      if (next is GameFinished) context.go(RouteNames.gameOver);
     });
 
     final lobbyState = ref.watch(lobbyProvider);

@@ -32,10 +32,7 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: RouteNames.gameOver,
-      builder: (_, state) {
-        final winnerId = state.uri.queryParameters['winnerId'] ?? '';
-        return GameOverScreen(winnerId: winnerId);
-      },
+      builder: (_, __) => const GameOverScreen(),
     ),
     GoRoute(
       path: RouteNames.settings,
