@@ -82,3 +82,29 @@ aún no tienen overlay (Favor/pares-tríos/Nope/Defuse), avance de turno.
 no-host, la partida queda parada ahí porque ese dispositivo todavía no puede
 actuar — es exactamente el hueco de Fase 5 (sincronización por red), no una
 falla de esta sesión de trabajo.
+
+---
+
+## Fase 4 — NopeWindowOverlay (pendiente de verificación manual)
+
+No se corrió en emulador en esta sesión (ver decisión en memoria: las pruebas
+manuales en emulador/dispositivo las hace el usuario). Pasos para reproducir
+cuando se quiera verificar:
+
+1. Como host, dar el turno a un jugador que tenga en mano `Attack`, `Skip`,
+   `Shuffle` o `Favor`/par de gatos (cualquier carta que abra una ventana de
+   Nope al jugarse) y jugarla.
+2. Confirmar que aparece el overlay "Ventana de Nope" con la barra de
+   progreso corriendo (duración `GameConstants.nopeWindowMs`, 3000 ms).
+3. Si el jugador local (mismo dispositivo, host) tiene un Nope en mano, el
+   botón "¡Nope!" debe estar habilitado; tocarlo debe descartar el Nope y
+   reiniciar la barra desde el principio (nueva vuelta de la cadena).
+4. Si no hay Nope en mano, el botón debe verse deshabilitado.
+5. Dejar que expire el temporizador sin jugar Nope: la ventana debe cerrarse
+   sola y aplicar el efecto original de la carta.
+
+Limitación conocida: como hoy solo el host corre el `GameEngine` real (Fase 5
+pendiente), probar que *otro* jugador cancele la carta requiere que ese mismo
+dispositivo host controle temporalmente la mano de ambos jugadores o esperar
+a la sincronización por red — no es un caso cubierto todavía por este flujo
+manual de un solo dispositivo.

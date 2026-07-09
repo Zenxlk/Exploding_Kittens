@@ -62,7 +62,7 @@ empezar la siguiente.
 - [x] `DeckWidget` — contador de cartas (sin animación de robo todavía: se hará en Fase de overlays/eventos, diferenciando carta robada por diff de longitud de mano)
 - [x] `DiscardPileWidget` — pila de descarte con última carta visible
 - [x] `PlayersHudWidget` — avatares de jugadores con contador de cartas
-- [ ] `NopeWindowOverlay` — temporizador visual con botón reactivo
+- [x] `NopeWindowOverlay` — temporizador visual (barra de progreso client-side, sin timestamp en `GameState`) y botón reactivo, habilitado solo si el jugador local tiene un Nope en mano y hay una acción pendiente
 - [ ] `InsertBombOverlay` — selector de posición al usar Defuse
 - [x] `SeeTheFutureOverlay` — visualización de top 3 cartas, visibilidad derivada de `GameState.seeTheFutureCards`, descartado como estado local de UI
 - [x] `FavorTargetOverlay` — selector de objetivo para Favor y pares de gato; el trío de gatos queda diferido (necesita elegir una carta concreta de la mano rival, que el actor no puede ver — hace falta su propio diseño de UI)

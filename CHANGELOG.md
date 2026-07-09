@@ -11,6 +11,15 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.3.8] — 2026-07-08
+
+### Añadido — Fase 4: NopeWindowOverlay
+- **`NopeWindowOverlay`** — se muestra mientras `TurnModel.phase == TurnPhase.nopeWindow`; barra de progreso puramente visual (no hay timestamp de apertura en `GameState`, así que el conteo es client-side y se reinicia cada vez que cambia `nopeChainCount`, igual que el `Timer` real del `GameNotifier`) y botón "¡Nope!" habilitado solo si el jugador local tiene una carta Nope en mano y existe `pendingAction` — misma condición que `CardRules.canNope` en el motor
+- `GameTableView` gana el callback `onPlayNope`, conectado en `GameScreen` a `gameProvider.notifier.playNope(...)` (ya existía en el notifier, sin cambios de engine)
+- 2 tests nuevos (`GameTableView`: overlay se muestra y juega el Nope de la mano; botón deshabilitado sin Nope en mano) — 98 tests totales pasando
+
+---
+
 ## [0.3.7] — 2026-07-07
 
 ### Añadido — Fase 4: FavorTargetOverlay
