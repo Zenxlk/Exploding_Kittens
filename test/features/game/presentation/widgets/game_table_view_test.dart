@@ -138,11 +138,11 @@ void main() {
         );
 
         await tester.tap(find.byType(CardWidget));
-        await tester.pump();
+        await tester.pumpAndSettle();
 
         expect(find.text('Jugar'), findsOneWidget);
         await tester.tap(find.text('Jugar'));
-        await tester.pump();
+        await tester.pumpAndSettle();
 
         expect(played, skip);
         expect(find.text('Jugar'), findsNothing);
@@ -171,7 +171,7 @@ void main() {
         );
 
         await tester.tap(find.byType(CardWidget));
-        await tester.pump();
+        await tester.pumpAndSettle();
 
         expect(
           find.text('Esta carta se juega en otro momento'),
@@ -204,7 +204,7 @@ void main() {
         );
 
         await tester.tap(find.byType(CardWidget));
-        await tester.pump();
+        await tester.pumpAndSettle();
 
         expect(
           find.text('Toca otra carta del mismo tipo para formar un par'),
@@ -244,16 +244,16 @@ void main() {
         );
 
         await tester.tap(find.byType(CardWidget));
-        await tester.pump();
+        await tester.pumpAndSettle();
         expect(find.text('Elegir objetivo'), findsOneWidget);
 
         await tester.tap(find.text('Elegir objetivo'));
-        await tester.pump();
+        await tester.pumpAndSettle();
         final targetButton = find.widgetWithText(OutlinedButton, 'Beto');
         expect(targetButton, findsOneWidget);
 
         await tester.tap(targetButton);
-        await tester.pump();
+        await tester.pumpAndSettle();
 
         expect(playedCard, favor);
         expect(targetId, 'rival');
@@ -293,16 +293,16 @@ void main() {
         );
 
         await tester.tap(find.byType(CardWidget).first);
-        await tester.pump();
+        await tester.pumpAndSettle();
         await tester.tap(find.byType(CardWidget).last);
-        await tester.pump();
+        await tester.pumpAndSettle();
 
         expect(find.text('Elegir objetivo'), findsOneWidget);
         await tester.tap(find.text('Elegir objetivo'));
-        await tester.pump();
+        await tester.pumpAndSettle();
 
         await tester.tap(find.widgetWithText(OutlinedButton, 'Beto'));
-        await tester.pump();
+        await tester.pumpAndSettle();
 
         expect(playedCards, [tacoA, tacoB]);
         expect(targetId, 'rival');
@@ -335,13 +335,13 @@ void main() {
         );
 
         await tester.tap(find.byType(CardWidget));
-        await tester.pump();
+        await tester.pumpAndSettle();
         await tester.tap(find.text('Elegir objetivo'));
-        await tester.pump();
+        await tester.pumpAndSettle();
         expect(find.widgetWithText(OutlinedButton, 'Beto'), findsOneWidget);
 
         await tester.tap(find.text('Cancelar').last);
-        await tester.pump();
+        await tester.pumpAndSettle();
 
         expect(find.widgetWithText(OutlinedButton, 'Beto'), findsNothing);
         expect(find.text('Elegir objetivo'), findsNothing);
@@ -375,6 +375,7 @@ void main() {
             ),
           ),
         );
+        await tester.pumpAndSettle();
 
         expect(find.text('Ves las próximas 3 cartas'), findsOneWidget);
         expect(find.text('Continuar'), findsOneWidget);
@@ -408,7 +409,7 @@ void main() {
         expect(find.text('Continuar'), findsOneWidget);
 
         await tester.tap(find.text('Continuar'));
-        await tester.pump();
+        await tester.pumpAndSettle();
         expect(find.text('Continuar'), findsNothing);
 
         // La misma revelación (sin pasar por null) sigue descartada.
@@ -418,6 +419,7 @@ void main() {
         // Una revelación nueva (null → no-null) vuelve a mostrarse.
         await tester.pumpWidget(build(null));
         await tester.pumpWidget(build(reveal));
+        await tester.pumpAndSettle();
         expect(find.text('Continuar'), findsOneWidget);
       },
     );
@@ -449,6 +451,7 @@ void main() {
             ),
           ),
         );
+        await tester.pumpAndSettle();
 
         expect(find.text('Ventana de Nope'), findsOneWidget);
         await tester.tap(find.text('¡Nope!'));
@@ -481,6 +484,7 @@ void main() {
             ),
           ),
         );
+        await tester.pumpAndSettle();
 
         final button = tester.widget<FilledButton>(
           find.widgetWithText(FilledButton, '¡Nope!'),
@@ -523,6 +527,7 @@ void main() {
             ),
           ),
         );
+        await tester.pumpAndSettle();
 
         expect(find.text('¿Dónde escondes la bomba?'), findsOneWidget);
         expect(find.text('Abajo del todo'), findsOneWidget);
@@ -596,6 +601,9 @@ void main() {
 
         expect(find.text('¡BOOM!'), findsOneWidget);
         expect(find.text('Beto explotó'), findsOneWidget);
+
+        // Deja que la animación termine para no dejar un Timer pendiente.
+        await tester.pumpAndSettle();
       },
     );
 

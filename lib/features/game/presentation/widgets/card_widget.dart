@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import 'package:exploding_kittens/core/theme/app_colors.dart';
 import 'package:exploding_kittens/core/theme/app_text_styles.dart';
@@ -121,7 +122,7 @@ class _CardFace extends StatelessWidget {
   Widget build(BuildContext context) {
     final (color, icon, label) = CardVisuals.of(type);
 
-    return Container(
+    final card = Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
@@ -164,6 +165,15 @@ class _CardFace extends StatelessWidget {
               ),
             ),
     );
+
+    // Pop de entrada al volverse jugable: efecto único (no en loop, a
+    // diferencia del glow estático de arriba) que se reproduce solo cuando
+    // esta rama del árbol se monta de nuevo (isPlayable pasa de falso a
+    // verdadero), no en cada rebuild.
+    if (!isPlayable) return card;
+    return card
+        .animate()
+        .scaleXY(begin: 0.92, end: 1, duration: 220.ms, curve: Curves.easeOut);
   }
 }
 

@@ -18,6 +18,7 @@ void main() {
       await tester.pumpWidget(
         _wrap(SeeTheFutureOverlay(topCards: cards, onDismiss: () {})),
       );
+      await tester.pumpAndSettle();
 
       expect(find.text('Skip'), findsOneWidget);
       expect(find.text('Attack'), findsOneWidget);
@@ -36,6 +37,7 @@ void main() {
           ),
         ),
       );
+      await tester.pumpAndSettle();
 
       await tester.tap(find.text('Continuar'));
       expect(dismissed, isTrue);

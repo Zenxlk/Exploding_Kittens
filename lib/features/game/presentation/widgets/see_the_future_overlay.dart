@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import 'package:exploding_kittens/core/theme/app_colors.dart';
 import 'package:exploding_kittens/core/theme/app_text_styles.dart';
@@ -58,6 +59,6 @@ class SeeTheFutureOverlay extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ).animate().fadeIn(duration: 200.ms);
   }
 }

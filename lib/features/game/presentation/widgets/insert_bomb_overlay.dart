@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import 'package:exploding_kittens/core/theme/app_colors.dart';
 import 'package:exploding_kittens/core/theme/app_text_styles.dart';
@@ -66,6 +67,6 @@ class _InsertBombOverlayState extends State<InsertBombOverlay> {
           ],
         ),
       ),
-    );
+    ).animate().fadeIn(duration: 200.ms);
   }
 }
