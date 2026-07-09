@@ -21,15 +21,26 @@ abstract final class AssetPaths {
   static const String cattermelon = 'assets/cards/cattermelon.png';
   static const String hairyPotatoCat = 'assets/cards/hairy_potato_cat.png';
 
-  // Sonidos
-  static const String soundCardDraw = 'sounds/card_draw.mp3';
-  static const String soundCardPlay = 'sounds/card_play.mp3';
-  static const String soundCardShuffle = 'sounds/card_shuffle.mp3';
-  static const String soundExplosion = 'sounds/explosion.mp3';
-  static const String soundDefuse = 'sounds/defuse.mp3';
+  // Sonidos — nombres de archivo reales en assets/sounds/ (ver
+  // ATTRIBUTION.md ahí para fuente/licencia de cada uno). `soundCardAttack`
+  // usa el nombre real "atack.mp3" (typo de origen, no se renombró el
+  // archivo). `soundDefuse` y `soundEliminated` no tienen clip propio
+  // todavía (ver ATTRIBUTION.md, marcados "pendiente"): reusan
+  // countdown.mp3 y explode.mp3 respectivamente hasta que se agreguen.
+  static const String soundCardDraw = 'sounds/draw_card.mp3';
+  static const String soundCardPlay = 'sounds/play_card.mp3';
+  static const String soundCardAttack = 'sounds/atack.mp3';
+  static const String soundCardShuffle = 'sounds/shuffle_deck.mp3';
+  static const String soundExplosion = 'sounds/explode.mp3';
+  static const String soundDefuse = 'sounds/countdown.mp3';
   static const String soundNope = 'sounds/nope.mp3';
-  static const String soundEliminated = 'sounds/player_eliminated.mp3';
-  static const String soundBgm = 'sounds/bgm_game.mp3';
+  static const String soundEliminated = 'sounds/explode.mp3';
+  static const String soundWin = 'sounds/win.mp3';
+
+  // Música de fondo (loop)
+  static const String musicMenu = 'sounds/music_menu.mp3';
+  static const String musicIngame = 'sounds/music_ingame.mp3';
+  static const String musicGameOver = 'sounds/music_gameover.mp3';
 
   // Animaciones Lottie
   static const String animExplosion = 'assets/animations/explosion.json';

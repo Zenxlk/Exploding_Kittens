@@ -22,9 +22,11 @@ class GameState extends Equatable {
     required this.turn,
     required this.phase,
     this.pendingAction,
+    this.pendingBomb,
     this.seeTheFutureCards,
     this.result,
     this.turnCount = 0,
+    this.eliminationOrder = const [],
   });
 
   final String id;
@@ -37,11 +39,19 @@ class GameState extends Equatable {
   // Acción en espera de resolución (Nope window abierta)
   final Object? pendingAction;
 
+  // Exploding Kitten robado, en espera de reinserción (Defuse en curso)
+  final CardModel? pendingBomb;
+
   // Top 3 cartas visibles (See the Future activo)
   final List<CardModel>? seeTheFutureCards;
 
   final GameResult? result;
   final int turnCount;
+
+  // Ids en el orden cronológico real en que fueron eliminados (a diferencia
+  // de recorrer `players` filtrando por status, que sigue el orden de la
+  // lista, no el de eliminación) — ver `ActionProcessor._eliminatePlayer`.
+  final List<String> eliminationOrder;
 
   List<PlayerModel> get alivePlayers =>
       players.where((p) => p.status == PlayerStatus.active).toList();
@@ -61,10 +71,13 @@ class GameState extends Equatable {
     TurnModel? turn,
     GamePhase? phase,
     Object? pendingAction,
+    CardModel? pendingBomb,
     List<CardModel>? seeTheFutureCards,
     GameResult? result,
     int? turnCount,
+    List<String>? eliminationOrder,
     bool clearPendingAction = false,
+    bool clearPendingBomb = false,
     bool clearSeeTheFuture = false,
   }) {
     return GameState(
@@ -76,11 +89,13 @@ class GameState extends Equatable {
       phase: phase ?? this.phase,
       pendingAction:
           clearPendingAction ? null : (pendingAction ?? this.pendingAction),
+      pendingBomb: clearPendingBomb ? null : (pendingBomb ?? this.pendingBomb),
       seeTheFutureCards: clearSeeTheFuture
           ? null
           : (seeTheFutureCards ?? this.seeTheFutureCards),
       result: result ?? this.result,
       turnCount: turnCount ?? this.turnCount,
+      eliminationOrder: eliminationOrder ?? this.eliminationOrder,
     );
   }
 
@@ -93,8 +108,10 @@ class GameState extends Equatable {
         turn,
         phase,
         pendingAction,
+        pendingBomb,
         seeTheFutureCards,
         result,
         turnCount,
+        eliminationOrder,
       ];
 }

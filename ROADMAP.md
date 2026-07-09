@@ -51,24 +51,26 @@ empezar la siguiente.
 
 ---
 
-## Fase 4 — Pantalla de juego completa ⏳
+## Fase 4 — Pantalla de juego completa ✅
 
-- [ ] `GameStateProvider` — `StateNotifier<GameState>` conectado al `GameEngine`
-- [ ] `GameScreen` — layout adaptativo portrait/landscape
-- [ ] `PlayerHandWidget` — fan de cartas con drag & drop
-- [ ] `CardWidget` — flip animation, glow en cartas jugables
-- [ ] `DeckWidget` — contador de cartas con animación de robo
-- [ ] `DiscardPileWidget` — pila de descarte con última carta visible
-- [ ] `PlayersHudWidget` — avatares de oponentes con contador de cartas
-- [ ] `NopeWindowOverlay` — temporizador visual con botón reactivo
-- [ ] `InsertBombOverlay` — selector de posición al usar Defuse
-- [ ] `SeeTheFutureOverlay` — visualización de top 3 cartas
-- [ ] `FavorTargetOverlay` — selector de objetivo
-- [ ] `ExplosionOverlay` — animación Lottie de explosión
-- [ ] `GameOverScreen` — resultado, ranking y opción de revancha
-- [ ] Integración de `audioplayers` (efectos y música de fondo)
-- [ ] Integración de `flutter_animate` en cartas y transiciones
-- [ ] Tests de providers y casos de uso
+- [x] Prework de engine: `ActionProcessor.resolveNopeWindow()` / `GameEngine.resolveNopeWindow()` — difiere y resuelve los efectos de Favor, Cat Pair/Trío y Shuffle según si la cadena de Nope quedó cancelada; fix de la duplicación de bomba en Defuse (`GameState.pendingBomb`)
+- [x] `CardAssetResolver` / `CardVisuals` — resuelve el asset real de una carta desde el `AssetManifest` si ya existe, o cae a un placeholder (color + icono + nombre) por `CardType`; permite ir soltando arte final carta por carta sin tocar widgets
+- [x] `GameStateProvider` — implementado como `GameNotifier` / `gameProvider` (`Notifier<GameSessionState>`, no `StateNotifier`, siguiendo el patrón ya usado por `lobbyProvider`), con `IGameGateway`/`LocalGameGateway` de por medio para poder enchufar un gateway remoto en Fase 5 sin tocar la UI
+- [x] `GameScreen` — conectado a `gameProvider`/`lobbyProvider`; layout adaptativo por reflow (Expanded + scroll interno, sin dos árboles portrait/landscape duplicados); solo el host arranca el `GameEngine` hoy, los no-host ven un placeholder de "esperando Fase 5"
+- [x] `PlayerHandWidget` — fan de cartas, selección por tap (se descartó drag & drop: más simple y necesario igual para pares/tríos de gato)
+- [x] `CardWidget` — flip animation, glow en cartas jugables
+- [x] `DeckWidget` — contador de cartas (sin animación de robo todavía: se hará en Fase de overlays/eventos, diferenciando carta robada por diff de longitud de mano)
+- [x] `DiscardPileWidget` — pila de descarte con última carta visible
+- [x] `PlayersHudWidget` — avatares de jugadores con contador de cartas
+- [x] `NopeWindowOverlay` — temporizador visual (barra de progreso client-side, sin timestamp en `GameState`) y botón reactivo, habilitado solo si el jugador local tiene un Nope en mano y hay una acción pendiente
+- [x] `InsertBombOverlay` — slider para elegir en qué posición del mazo reinsertar la Exploding Kitten robada, entre "arriba del todo" y "abajo del todo"; solo se muestra al jugador que la robó
+- [x] `SeeTheFutureOverlay` — visualización de top 3 cartas, visibilidad derivada de `GameState.seeTheFutureCards`, descartado como estado local de UI
+- [x] `FavorTargetOverlay` — selector de objetivo para Favor y pares de gato; el trío de gatos queda diferido (necesita elegir una carta concreta de la mano rival, que el actor no puede ver — hace falta su propio diseño de UI)
+- [x] `ExplosionOverlay` — animación de eliminación (placeholder con Flutter puro, escala con rebote; se reemplazará por el Lottie real de `AssetPaths.animExplosion` cuando exista ese asset); se detecta por diff de `GameState` (un jugador que estaba vivo deja de estarlo), se cierra sola sin acción del jugador
+- [x] `GameOverScreen` — ganador, ranking en orden real de eliminación (fix de `WinCondition`/nuevo `GameState.eliminationOrder`: antes seguía el orden de la lista de jugadores, no el cronológico) y botón de revancha, solo para el host (mismo límite que `GameScreen` hoy); revancha re-arranca el mismo `GameEngine`/bus con los jugadores de la sala actual
+- [x] Integración de `audioplayers` (efectos y música de fondo) — `IAudioService`/`AudioService` (interfaz + impl, testeable con fake), `GameSoundController` reproduce el efecto de cada `GameEvent` del motor mientras dura la partida, `GameScreen`/`GameOverScreen` reproducen `music_ingame.mp3`/`music_gameover.mp3` en loop. De paso se corrigieron los nombres de archivo en `AssetPaths` (no coincidían con los reales en `assets/sounds/`). **Alcance de esta pasada**: solo pantallas de partida; `music_menu.mp3` para Home/Splash/Lobby/Settings queda pendiente (no es parte de "pantalla de juego completa")
+- [x] Integración de `flutter_animate` en cartas y transiciones — `CardWidget` hace un "pop" de escala al volverse jugable, y los 5 overlays (SeeTheFuture/FavorTarget/NopeWindow/InsertBomb/Explosion) tienen fade-in de entrada, mismo estilo `.animate()` que ya usaban Home/Splash
+- [x] Tests de providers y casos de uso — `GameNotifier`: un test por método (`playCard`/`playFavor`/`playCatPair`/`playCatTrio`/`playNope`/`defuse`) verificando el `TurnAction` concreto que dispatchea, más el nuevo getter `events`; 118 tests totales pasando
 
 ---
 
@@ -90,6 +92,7 @@ empezar la siguiente.
 - [ ] Migrar `MdnsAdvertiser` / `MdnsDiscoverer` de UDP broadcast a mDNS/Bonjour real (`nsd` o `multicast_dns`)
 - [ ] `WifiManager.MulticastLock` vía platform channel en Android 10+
 - [ ] Persistir `playerId` con `shared_preferences` para reconexión tras crash
+- [ ] Reproducir `AssetPaths.musicMenu` en Home/Splash/Lobby/Settings (hoy solo `GameScreen`/`GameOverScreen` tienen música vía `AudioService`)
 
 ### Bots / modo offline
 - [ ] Interfaz `BotStrategy` con implementación básica (aleatoria)

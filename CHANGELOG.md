@@ -7,7 +7,158 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 ## [Unreleased]
 
 ### En progreso
-- Fase 4: Pantalla de juego completa
+- Fase 5: Red y reconexión
+
+---
+
+## [0.4.1] — 2026-07-08
+
+### Corregido
+- `SettingsScreen` mostraba la versión hardcodeada `0.1.0` desde el primer release, nunca actualizada en los bumps posteriores — ahora dice `0.4.0`
+
+---
+
+## [0.4.0] — 2026-07-08
+
+### Añadido — Fase 4 completa: flutter_animate + cierre de fase
+- **`flutter_animate` en cartas y overlays**: `CardWidget` hace un "pop" de escala (`.animate().scaleXY(...)`) al volverse jugable; los 5 overlays de la mesa (`SeeTheFutureOverlay`, `FavorTargetOverlay`, `NopeWindowOverlay`, `InsertBombOverlay`, `ExplosionOverlay`) ahora tienen un fade-in de entrada — mismo estilo `.animate()` que ya usaban `HomeScreen`/`SplashScreen`
+- Ajustados los tests de `game_table_view_test.dart` y `see_the_future_overlay_test.dart` para asentar (`pumpAndSettle`) las animaciones antes de verificar, siguiendo el mismo patrón que `home_screen_test.dart` ya usaba — `flutter_animate` deja un `Timer` corriendo internamente y `flutter_test` falla si queda pendiente al terminar el test
+- 118 tests totales pasando
+
+**Con esto se cierra la Fase 4 — Pantalla de juego completa.** Los 4 overlays de interacción (Nope, InsertBomb, Favor/pares, SeeTheFuture), `ExplosionOverlay`, `GameOverScreen` con ranking y revancha, audio (efectos + música) y animaciones están implementados sobre el motor de la Fase 1. Quedan fuera de esta fase, documentados como pendientes: trío de gatos (necesita su propio diseño de UI para elegir carta de la mano rival), música de menú fuera de la pantalla de juego, y por supuesto toda la sincronización real por red (Fase 5).
+
+---
+
+## [0.3.13] — 2026-07-08
+
+### Añadido — Fase 4: tests de providers
+- `GameNotifier` — un test por método de intención (`playCard`, `playFavor`, `playCatPair`, `playCatTrio`, `playNope`, `defuse`) que verifica el `TurnAction` concreto construido y sus campos, más un test del nuevo getter `events`. Antes solo se probaba el camino genérico de `_apply` (error/éxito/fin de partida) a través de `drawCard`, sin confirmar que el resto de métodos arman la acción correcta
+- 118 tests totales pasando
+
+---
+
+## [0.3.12] — 2026-07-08
+
+### Añadido — Fase 4: audioplayers (efectos y música)
+- **`IAudioService`/`AudioService`** (`core/audio/`) — dos reproductores independientes (efectos vs. música en loop) sobre `audioplayers`; los fallos de reproducción se capturan y loguean en vez de propagarse, para que un audio faltante o sin salida de sonido no interrumpa la partida. Expuesto vía `audioServiceProvider`, sustituible por un fake en tests de widgets
+- **`GameSoundController`** — se suscribe al `Stream<GameEvent>` del motor (nuevo getter `GameNotifier.events`) mientras dura la partida y reproduce el efecto de cada evento (`soundAssetFor`, función pura testeada aparte): robar, jugar carta (Attack tiene su propio clip), barajar, bomba activada, Defuse, Nope, fin de partida. `PlayerEliminatedEvent` no suena aparte a propósito — se emite junto a `BombTriggeredEvent` en el mismo instante y sonarían duplicados
+- `GameScreen` reproduce `music_ingame.mp3` y `GameOverScreen` reproduce `music_gameover.mp3` en loop mientras están montadas, resincronizando volumen/activado cuando cambian los ajustes
+- Corrección de `AssetPaths`: los nombres de sonido no coincidían con los archivos reales de `assets/sounds/` (`card_draw.mp3` → `draw_card.mp3`, `explosion.mp3` → `explode.mp3`, etc.); Defuse y "jugador eliminado" reusan `countdown.mp3`/`explode.mp3` porque no tienen clip propio todavía (ver `ATTRIBUTION.md`)
+- 4 tests nuevos (`soundAssetFor` + `GameSoundController` con un `IAudioService` fake) — 111 tests totales pasando
+- **Fuera de alcance esta vez**: música de menú (`music_menu.mp3`) en Home/Splash/Lobby/Settings — queda anotada en el Roadmap (Fase 6), no es parte de "pantalla de juego completa"
+
+---
+
+## [0.3.11] — 2026-07-08
+
+### Añadido — Fase 4: GameOverScreen
+- **`GameOverScreen`** ahora es un `ConsumerWidget` real: muestra el nombre del ganador, turnos jugados y el ranking completo (ganador primero, luego el orden inverso de eliminación real — el último en explotar queda 2º, el primero en explotar queda último), cruzando `GameResult.eliminationOrder` con los nombres de `lobbyProvider`
+- Botón **Revancha** solo para el host (mismo límite que `GameScreen`: solo el host corre el `GameEngine` real hasta la Fase 5); re-arranca la partida con `startLocalGame` reusando los jugadores actuales de la sala y el mismo `GameEventBus`
+- Ruta `/game/over` deja de depender de un query param `winnerId` — lee el resultado directo de `gameProvider` (`GameFinished`), evitando duplicar estado que ya vive en el provider
+- 3 tests nuevos (`GameOverScreen`: sin resultado, ranking + revancha visible para el host, oculto para no-host)
+
+### Corregido — orden de eliminación
+- `WinCondition.check` construía `GameResult.eliminationOrder` filtrando `GameState.players`, que sigue el orden de la lista, no el orden real en que los jugadores explotaron — un bug ya detectado durante la planificación de Fase 4 pero sin arreglar hasta que `GameOverScreen` lo necesitó de verdad. `GameState` gana un campo `eliminationOrder` que `ActionProcessor._eliminatePlayer` va llenando en el momento exacto de cada eliminación; `WinCondition` solo lo reexpone
+- 1 test nuevo (`ActionProcessor`: el orden de eliminación es cronológico, no el de la lista de jugadores) — 106 tests totales pasando
+
+---
+
+## [0.3.10] — 2026-07-08
+
+### Añadido — Fase 4: ExplosionOverlay
+- **`ExplosionOverlay`** — animación de eliminación (jugador robó Exploding Kitten sin Defuse): ícono con escala y rebote (`Curves.elasticOut`) sobre fondo oscuro, se cierra sola después de 1.6s sin necesitar ninguna acción del jugador. Placeholder con Flutter puro; se reemplaza por el Lottie real de `AssetPaths.animExplosion` cuando ese asset exista (`assets/animations/` sigue vacío)
+- `GameTableView` detecta la eliminación por diff entre el `GameState` anterior y el nuevo (un jugador que estaba vivo deja de estarlo) — no hay ningún evento ni campo dedicado en `GameState` para esto, mismo enfoque que ya usa el descarte de `SeeTheFutureOverlay`
+- 2 tests nuevos (`GameTableView`: overlay aparece al detectar la eliminación; se cierra solo tras la animación, usando `pumpAndSettle`) — 102 tests totales pasando
+
+---
+
+## [0.3.9] — 2026-07-08
+
+### Añadido — Fase 4: InsertBombOverlay
+- **`InsertBombOverlay`** — se muestra mientras `TurnModel.phase == TurnPhase.resolving` y `GameState.pendingBomb != null`, solo al jugador que robó la bomba; `Slider` para elegir la posición de reinserción entre 0 (arriba del todo, la próxima carta que se robaría) y `drawPileCount` (abajo del todo) — el motor (`DeckManager.insertAt`) ya clampaba cualquier valor, así que no hace falta validación extra en la UI
+- `GameTableView` gana el callback `onDefuseBomb`, conectado en `GameScreen` a `gameProvider.notifier.defuse(...)` (ya existía en el notifier, sin cambios de engine); toma la primera carta Defuse de la mano, garantizada por el invariante del motor (solo se llega a `resolving` si el jugador tiene Defuse)
+- Banner de estado actualizado: mientras se resuelve la bomba, los demás jugadores ven "Esperando a que \<jugador\> esconda la bomba…" en vez del texto genérico anterior
+- 2 tests nuevos (`GameTableView`: overlay se muestra y confirma con la posición elegida; no se muestra al jugador que no tiene el turno) — 100 tests totales pasando
+
+---
+
+## [0.3.8] — 2026-07-08
+
+### Añadido — Fase 4: NopeWindowOverlay
+- **`NopeWindowOverlay`** — se muestra mientras `TurnModel.phase == TurnPhase.nopeWindow`; barra de progreso puramente visual (no hay timestamp de apertura en `GameState`, así que el conteo es client-side y se reinicia cada vez que cambia `nopeChainCount`, igual que el `Timer` real del `GameNotifier`) y botón "¡Nope!" habilitado solo si el jugador local tiene una carta Nope en mano y existe `pendingAction` — misma condición que `CardRules.canNope` en el motor
+- `GameTableView` gana el callback `onPlayNope`, conectado en `GameScreen` a `gameProvider.notifier.playNope(...)` (ya existía en el notifier, sin cambios de engine)
+- 2 tests nuevos (`GameTableView`: overlay se muestra y juega el Nope de la mano; botón deshabilitado sin Nope en mano) — 98 tests totales pasando
+
+---
+
+## [0.3.7] — 2026-07-07
+
+### Añadido — Fase 4: FavorTargetOverlay
+- **`FavorTargetOverlay`** — selector de jugador objetivo, usado por Favor (1 carta) y pares de gato (2 cartas del mismo tipo); ambos solo necesitan un objetivo, no una carta específica de la mano rival
+- `GameTableView` pasa de selección de una sola carta a selección múltiple (`Set<String>`), con una clasificación explícita de qué se puede hacer con lo seleccionado: jugar directo (Attack/Skip/Shuffle/SeeTheFuture), elegir objetivo (Favor/par), esperar la pareja (una sola carta de gato), o "se juega en otro momento" (Nope/Defuse sueltos, trío de gatos)
+- **Trío de gatos queda diferido a propósito**: el motor requiere que el actor indique `chosenCardId`, una carta concreta de la mano del rival que no puede ver en este diseño (un dispositivo por jugador) — necesita su propio diseño de UI, no se fuerza uno ad-hoc
+- 6 tests nuevos (`GameTableView`: hint de par, flujo Favor completo, flujo par de gatos completo, cancelar limpia selección) — 96 tests totales pasando
+
+---
+
+## [0.3.6] — 2026-07-07
+
+### Añadido — Fase 4: primer overlay (See the Future)
+- **`SeeTheFutureOverlay`** — muestra las 3 cartas de arriba del mazo (de arriba hacia abajo) con los placeholders de `CardVisuals`, y un botón "Continuar" para cerrarlo
+- `GameTableView` deriva su visibilidad de `GameState.seeTheFutureCards` (sin nuevo estado en el provider); el "descartado" es estado local de UI, porque el campo solo se limpia cuando el turno avanza (`TurnManager.advance`), no cuando el jugador ya lo vio — una revelación nueva (null → no-null) vuelve a mostrarlo aunque la anterior ya estuviera cerrada
+- 4 tests nuevos (`SeeTheFutureOverlay` + integración en `GameTableView`) — 92 tests totales pasando
+
+---
+
+## [0.3.5] — 2026-07-07
+
+### Añadido — Fase 4: GameScreen conectado
+- **`GameTableView`** — composición de mesa (HUD + mazo + descarte + mano + banner de estado); solo muestra y controla la mano del **jugador local** (no la de quien tenga el turno), pensado para que cada dispositivo conectado a la sala sea dueño de un único jugador. Selección de carta por tap y botón "Jugar" para las cartas sin objetivo (Attack, Skip, Shuffle, See the Future); Favor/pares-tríos de gato/Nope/Defuse muestran "se juega en el próximo paso" hasta los overlays de selección de objetivo
+- **`GameScreen`** conectado a `gameProvider` y `lobbyProvider`: solo el host arranca hoy el `GameEngine` real (vía `LocalGameGateway`) al entrar a la sala; los no-host ven "Esperando sincronización con el host… (llega en la Fase 5)" — sincronizar el estado real por red es explícitamente Fase 5, no se simula
+- Navega a `GameOverScreen` automáticamente cuando el `GameState` llega a `GamePhase.finished`
+- 7 tests nuevos (`GameTableView` + `GameScreen` con lobby/gateway fake) — 88 tests totales pasando
+
+### Verificado
+- App compilada y lanzada en un dispositivo Android real (`flutter run`): arranca sin errores hasta `HomeScreen`. No fue posible automatizar taps con ADB (el dispositivo no concede `INJECT_EVENTS`), así que el flujo Lobby → GameScreen no se probó de punta a punta en este dispositivo — requiere además un segundo dispositivo real en la misma red para completar el lobby (`GameConstants.minPlayers = 2`)
+
+---
+
+## [0.3.4] — 2026-07-07
+
+### Añadido — Fase 4: widgets de mesa
+- **`CardWidget`** — carta individual con flip animado (boca arriba/abajo), glow cuando es jugable, borde de selección; usa el placeholder de `CardVisuals` si `assetPath` es `null`
+- **`DeckWidget`** — dorso del mazo con contador de cartas restantes
+- **`DiscardPileWidget`** / **`DottedCardSlot`** — última carta descartada boca arriba, o hueco vacío si aún no se descartó nada
+- **`PlayersHudWidget`** — avatares de todos los jugadores con nombre y contador de cartas; atenúa a los eliminados y resalta a quien tiene el turno
+- **`PlayerHandWidget`** — mano del jugador local en abanico, selección por tap (no drag & drop, necesario igualmente para elegir pares/tríos de gato)
+- Todos son widgets "tontos": reciben datos ya resueltos (tipo de carta, ruta de asset, callbacks) y no leen providers — se pueden testear con fixtures sin `ProviderScope`
+- 12 tests nuevos de widgets — 81 tests totales pasando
+
+---
+
+## [0.3.3] — 2026-07-07
+
+### Añadido — Fase 4: fundamentos (CardAssetResolver + GameNotifier)
+- **`CardVisuals`** — apariencia de respaldo (color, icono, nombre) por `CardType`, usada como placeholder mientras no exista el arte final
+- **`CardAssetResolver`** — resuelve la ruta real de una carta desde el `AssetManifest` del bundle si ya existe, o `null` para caer al placeholder; permite ir soltando el arte carta por carta sin tocar ningún widget (hoy con `assets/cards/` vacío, todo resuelve a placeholder)
+- **`IGameGateway`** / **`LocalGameGateway`** — fachada entre la UI y "la partida"; hoy envuelve un `GameEngine` local, deja el hueco para un gateway remoto en Fase 5 sin cambiar el Notifier ni los widgets
+- **`GameNotifier`** / **`gameProvider`** — `Notifier<GameSessionState>` (`GameIdle` / `GameRunning` / `GameFinished`) con métodos de intención (`drawCard`, `playCard`, `playFavor`, `playCatPair`, `playCatTrio`, `playNope`, `defuse`); captura `InvalidActionException` como error transitorio sin romper la UI; agenda y resuelve la ventana de Nope con un `Timer` interno (`GameConstants.nopeWindowMs`) llamando a `resolveNopeWindow()`
+- 7 tests nuevos del `GameNotifier` con un `IGameGateway` fake — 69 tests totales pasando
+
+---
+
+## [0.3.2] — 2026-07-07
+
+### Corregido — prework de engine para Fase 4
+- **La ventana de Nope nunca se cerraba** — no existía ninguna vía para resolverla, y los efectos de Favor, Cat Pair/Trío y Shuffle se aplicaban *antes* de abrir la ventana, así que un Nope exitoso no podía cancelar nada. Ahora esos efectos se difieren y `ActionProcessor.resolveNopeWindow()` (expuesto como `GameEngine.resolveNopeWindow()`) los aplica solo si la cadena de Nopes no quedó cancelada (`nopeChainCount` par)
+- **Defuse duplicaba o perdía la bomba** — al reinsertar la bomba se buscaba cualquier Exploding Kitten restante en el mazo en vez de la carta realmente robada, duplicándola (o perdiéndola si era la última). Ahora se guarda en `GameState.pendingBomb` y se reinserta exactamente esa carta
+
+### Eliminado
+- `TurnManager.closeNopeWindow()` / `requireDraw()` — código muerto sin llamadas, sustituido por `ActionProcessor.resolveNopeWindow()`
+
+### Notas técnicas
+- `GameEngine.dispose()` documentado: cierra el `GameEventBus` singleton de por vida de la app; no debe llamarse desde el ciclo de vida de un provider (p. ej. en una revancha)
+- 4 tests nuevos de `ActionProcessor` (Defuse, Favor diferido, Nope cancela Favor, Shuffle diferido) — 62 tests totales pasando
 
 ---
 
