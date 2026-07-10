@@ -11,6 +11,13 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.4.6] — 2026-07-09
+
+### Añadido — Fase 5: acceso al WsClient/WsServer del lobby
+- `ILobbyRepository`/`LobbyRepository`/`LobbyNotifier` exponen ahora `wsClient`/`wsServer` (getters aditivos, sin cambio de comportamiento) para que la partida reutilice la conexión que el lobby ya abrió en vez de crear una segunda
+
+---
+
 ## [0.4.5] — 2026-07-09
 
 ### Añadido — Fase 5: eliminación por desconexión en el motor
