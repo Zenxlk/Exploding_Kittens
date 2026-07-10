@@ -36,4 +36,22 @@ class PlayerModel extends Equatable {
 
   @override
   List<Object?> get props => [id, name, hand, status, isHost];
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'hand': hand.map((c) => c.toJson()).toList(),
+        'status': status.name,
+        'isHost': isHost,
+      };
+
+  factory PlayerModel.fromJson(Map<String, dynamic> j) => PlayerModel(
+        id: j['id'] as String,
+        name: j['name'] as String,
+        hand: (j['hand'] as List)
+            .map((c) => CardModel.fromJson(c as Map<String, dynamic>))
+            .toList(),
+        status: PlayerStatus.values.byName(j['status'] as String),
+        isHost: j['isHost'] as bool,
+      );
 }

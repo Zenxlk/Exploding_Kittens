@@ -25,4 +25,18 @@ class DeckModel extends Equatable {
 
   @override
   List<Object?> get props => [drawPile, discardPile];
+
+  Map<String, dynamic> toJson() => {
+        'drawPile': drawPile.map((c) => c.toJson()).toList(),
+        'discardPile': discardPile.map((c) => c.toJson()).toList(),
+      };
+
+  factory DeckModel.fromJson(Map<String, dynamic> j) => DeckModel(
+        drawPile: (j['drawPile'] as List)
+            .map((c) => CardModel.fromJson(c as Map<String, dynamic>))
+            .toList(),
+        discardPile: (j['discardPile'] as List)
+            .map((c) => CardModel.fromJson(c as Map<String, dynamic>))
+            .toList(),
+      );
 }
