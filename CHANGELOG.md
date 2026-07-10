@@ -11,6 +11,16 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.4.3] — 2026-07-09
+
+### Añadido — Fase 5: transporte de mensajes en partida
+- `WsMessage`: activados los mensajes de partida (`GameStateMessage`, `ActionMessage`) que antes eran stubs sin usar, y añadidos `GameEventMessage` (para que los no-host, sin motor local, disparen sonidos/animaciones) y `ActionRejectedMessage` (feedback dirigido cuando una acción de un cliente falla `GameRules.validate` en el host)
+- `WsServer` ahora enruta `ActionMessage` de verdad (antes caía al `default` y se perdía) por un nuevo stream `actionMessages`, y expone `broadcast()`/`sendToPlayer()` públicos
+- `WsServer.markGameStarted()` distingue una desconexión de lobby (comportamiento de siempre) de una desconexión a mitad de partida, que ahora dispara `onPlayerDisconnected` en vez de sacar al jugador de la sala — la capa de juego decide qué hacer (grace period, siguiente pieza de la fase)
+- 156 tests totales pasando
+
+---
+
 ## [0.4.2] — 2026-07-09
 
 ### Añadido — Fase 5: serialización del motor
