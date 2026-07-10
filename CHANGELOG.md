@@ -11,6 +11,14 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.4.4] — 2026-07-09
+
+### Añadido — Fase 5: ReconnectionManager
+- `ReconnectionManager` real (antes era solo un comentario `TODO`): un `Timer` de grace period por jugador desconectado, usando `GameConstants.reconnectTimeoutSeconds` (60s) por defecto; `cancelIfPending` lo cancela si reconecta a tiempo
+- 162 tests totales pasando
+
+---
+
 ## [0.4.3] — 2026-07-09
 
 ### Añadido — Fase 5: transporte de mensajes en partida
