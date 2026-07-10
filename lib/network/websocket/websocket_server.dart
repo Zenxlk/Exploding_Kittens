@@ -32,9 +32,30 @@ class WsServer {
   LobbyRoom? _room;
   final _roomController = StreamController<LobbyRoom>.broadcast();
 
+  // Forwarded ActionMessages, tagged with the sender's playerId — the server
+  // doesn't know anything about GameState/TurnAction, it just routes bytes;
+  // the game feature layer decodes and applies them.
+  final _actionController = StreamController<
+      ({String playerId, Map<String, dynamic> actionJson})>.broadcast();
+
+  // True once the host has started the actual game (not just the lobby).
+  // While false, a socket drop is a lobby departure (_onLeave, as before);
+  // once true, it's a mid-game disconnect that goes through the grace-period
+  // hooks below instead of immediately removing the player.
+  bool _gameStarted = false;
+
+  // Wired by the game feature layer (ReconnectionManager) once the game
+  // starts; network/ deliberately knows nothing about GameState/PlayerStatus.
+  void Function(String playerId)? onPlayerDisconnected;
+  void Function(String playerId)? onPlayerReconnected;
+
   Stream<LobbyRoom> get roomStream => _roomController.stream;
+  Stream<({String playerId, Map<String, dynamic> actionJson})>
+      get actionMessages => _actionController.stream;
   LobbyRoom? get currentRoom => _room;
   bool get isRunning => _httpServer != null;
+
+  void markGameStarted() => _gameStarted = true;
 
   // Starts the server and initialises the room with the host as first player.
   // port: pass 0 to let the OS assign a free port (useful in tests).
@@ -109,6 +130,10 @@ class WsServer {
         _onStartGame(ws);
       case PingMessage():
         _send(ws, const PongMessage());
+      case ActionMessage(:final actionJson):
+        _onAction(ws, actionJson);
+      case PlayerReconnectedMessage(:final playerId):
+        onPlayerReconnected?.call(playerId);
       default:
         break;
     }
@@ -124,6 +149,7 @@ class WsServer {
     if (room.players.any((p) => p.id == playerId)) {
       _clients[playerId] = ws;
       _send(ws, RoomStateMessage(roomJson: room.toJson()));
+      onPlayerReconnected?.call(playerId);
       return;
     }
 
@@ -183,6 +209,7 @@ class WsServer {
       _send(ws, const WsErrorMessage(message: 'Not enough ready players'));
       return;
     }
+    markGameStarted();
     _updateRoom(room.copyWith(status: LobbyStatus.starting));
     _broadcast(const GameStartingMessage());
     // Send updated room so clients see status:starting via roomStream and
@@ -193,7 +220,23 @@ class WsServer {
   void _onDisconnect(WebSocket ws) {
     _pending.remove(ws);
     final playerId = _playerIdFor(ws);
-    if (playerId != null) _onLeave(playerId);
+    if (playerId == null) return;
+
+    // Mid-game, non-host disconnect: keep the player in the room (they may
+    // reconnect within the grace period) instead of removing them outright.
+    if (_gameStarted && playerId != _hostId) {
+      _clients.remove(playerId);
+      onPlayerDisconnected?.call(playerId);
+      return;
+    }
+
+    _onLeave(playerId);
+  }
+
+  void _onAction(WebSocket ws, Map<String, dynamic> actionJson) {
+    final playerId = _playerIdFor(ws);
+    if (playerId == null) return;
+    _actionController.add((playerId: playerId, actionJson: actionJson));
   }
 
   // ── helpers ───────────────────────────────────────────────────────────────
@@ -218,6 +261,15 @@ class WsServer {
     }
   }
 
+  // Public wrappers used by the game feature layer (network/ itself stays
+  // agnostic of GameState/GameEvent — it only knows about WsMessage).
+  void broadcast(WsMessage msg) => _broadcast(msg);
+
+  void sendToPlayer(String playerId, WsMessage msg) {
+    final ws = _clients[playerId];
+    if (ws != null) _send(ws, msg);
+  }
+
   void _broadcastRoomState() =>
       _broadcast(RoomStateMessage(roomJson: _room!.toJson()));
 
@@ -230,6 +282,7 @@ class WsServer {
     await _httpServer?.close(force: true);
     _httpServer = null;
     await _roomController.close();
+    await _actionController.close();
     _clients.clear();
     _pending.clear();
   }

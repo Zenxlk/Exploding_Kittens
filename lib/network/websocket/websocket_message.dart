@@ -1,10 +1,12 @@
 // Messages exchanged between the WebSocket server (host) and clients.
 //
 // Naming convention:
-//   Client → Server : JoinRoom, SetReady, LeaveRoom, StartGame
-//   Server → Client : RoomState, GameStarting, PlayerKicked, WsError
+//   Client → Server : JoinRoom, SetReady, LeaveRoom, StartGame, Action,
+//                      PlayerReconnected
+//   Server → Client : RoomState, GameStarting, PlayerKicked, WsError,
+//                      GameState (broadcast), GameEvent (broadcast),
+//                      ActionRejected (targeted)
 //   Both directions : Ping, Pong
-//   Phase 5 stubs   : GameState, Action, PlayerReconnected
 
 sealed class WsMessage {
   const WsMessage();
@@ -26,10 +28,12 @@ sealed class WsMessage {
       // ── heartbeat ────────────────────────────────────────────────────────
       'ping' => const PingMessage(),
       'pong' => const PongMessage(),
-      // ── phase 5 (in-game) ────────────────────────────────────────────────
+      // ── in-game (Fase 5) ─────────────────────────────────────────────────
       'game_state' => GameStateMessage._fromJson(json),
       'action' => ActionMessage._fromJson(json),
       'player_reconnected' => PlayerReconnectedMessage._fromJson(json),
+      'game_event' => GameEventMessage._fromJson(json),
+      'action_rejected' => ActionRejectedMessage._fromJson(json),
       //
       final t => throw FormatException('Unknown WsMessage type: $t'),
     };
@@ -148,9 +152,9 @@ final class PongMessage extends WsMessage {
   Map<String, dynamic> toJson() => {'type': 'pong'};
 }
 
-// ── Phase 5 stubs — in-game messages ─────────────────────────────────────────
+// ── In-game messages (Fase 5) ────────────────────────────────────────────────
 
-// Full GameState snapshot; sent by host after every action.
+// Full GameState snapshot; broadcast by host after every action.
 final class GameStateMessage extends WsMessage {
   const GameStateMessage({required this.stateJson});
 
@@ -188,4 +192,33 @@ final class PlayerReconnectedMessage extends WsMessage {
   @override
   Map<String, dynamic> toJson() =>
       {'type': 'player_reconnected', 'playerId': playerId};
+}
+
+// A single GameEvent; broadcast by host alongside GameState so non-host
+// devices (with no local engine) can still trigger sounds/animations.
+final class GameEventMessage extends WsMessage {
+  const GameEventMessage({required this.eventJson});
+
+  final Map<String, dynamic> eventJson;
+
+  factory GameEventMessage._fromJson(Map<String, dynamic> j) =>
+      GameEventMessage(eventJson: j['payload'] as Map<String, dynamic>);
+
+  @override
+  Map<String, dynamic> toJson() => {'type': 'game_event', 'payload': eventJson};
+}
+
+// Sent by host to the specific client whose ActionMessage failed
+// GameRules.validate (InvalidActionException), instead of silently dropping it.
+final class ActionRejectedMessage extends WsMessage {
+  const ActionRejectedMessage({required this.message});
+
+  final String message;
+
+  factory ActionRejectedMessage._fromJson(Map<String, dynamic> j) =>
+      ActionRejectedMessage(message: j['message'] as String);
+
+  @override
+  Map<String, dynamic> toJson() =>
+      {'type': 'action_rejected', 'message': message};
 }
