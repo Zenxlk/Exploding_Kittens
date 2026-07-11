@@ -11,6 +11,16 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.5.8] — 2026-07-11
+
+### Corregido
+- Reportado por el usuario: la música de fondo seguía sonando al cerrar o minimizar la app. `App` ahora observa el ciclo de vida (`WidgetsBindingObserver`) y pausa la música en `paused`/`detached`/`hidden`, reanudándola en `resumed`. `IAudioService` suma `pauseMusic()`/`resumeMusic()`
+
+## Notas
+- Este bug se volvió mucho más notorio tras la música de menú agregada en 0.5.7 (antes solo sonaba durante una partida activa)
+
+---
+
 ## [0.5.7] — 2026-07-11
 
 ### Añadido — Fase 6: dos mejoras técnicas pendientes
