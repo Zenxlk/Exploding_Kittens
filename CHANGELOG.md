@@ -7,7 +7,118 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 ## [Unreleased]
 
 ### En progreso
-- Fase 5: Red y reconexión
+- Fase 6: mejoras técnicas, bots y expansiones (ver ROADMAP.md)
+
+---
+
+## [0.5.2] — 2026-07-11
+
+### Corregido
+- Reportado por el usuario: quedarse solo con cartas de gato sueltas (sin pareja) se sentía como que el juego se congelaba. `CardRules.canPlay` ahora rechaza una carta de gato jugada sola vía `PlayCardAction` (antes pasaba la validación igual, se descartaba sin efecto y el turno no avanzaba — un agujero negro solo evitado por la UI); y el mensaje de la barra de selección ahora indica explícitamente que se puede tocar el mazo para robar y pasar el turno
+
+---
+
+## [0.5.1] — 2026-07-11
+
+### Corregido
+- Verificación manual de Fase 5 en 2 emuladores reales (ver `docs/VERIFICATION_LOG.md`): estado real jugado y sincronizado en ambos sentidos, `InsertBombOverlay`/`ExplosionOverlay`/`GameOverScreen` confirmados en el no-host, y el pipeline completo de grace period + eliminación por desconexión probado de punta a punta con una caída real del proceso
+- `GameOverScreen` no navegaba al no-host cuando el host iniciaba una revancha — se quedaba varado mostrando "no hay ningún resultado de partida". Ahora escucha `remoteGameProvider` y navega a la partida nueva en cuanto deja de estar en `GameFinished`
+
+### Documentado (sin arreglar, fuera de alcance de esta sesión)
+- Recrear una sala sin salir de la anterior en la misma sesión de app dejaba un "servidor fantasma" (el `WsServer` viejo nunca se cerraba) — bug real del ciclo de vida del lobby (Fase 3), no de la sincronización de Fase 5; candidato para una futura sesión
+
+---
+
+## [0.5.0] — 2026-07-09
+
+### Añadido — Fase 5 completa: red y reconexión
+- Con las piezas de las versiones 0.4.2 a 0.4.10 (serialización del motor, transporte en `WsServer`/`WsMessage`, `ReconnectionManager`, eliminación por desconexión en el motor, `RemoteGameNotifier`, el puente host↔red, `GameScreen`/`GameOverScreen` sincronizados y la reconexión automática de `WsClient`) se cierra la Fase 5: los dispositivos no-host ya juegan la partida real sincronizada por WebSocket, no solo el host.
+- 200 tests totales pasando
+
+**Con esto se cierra la Fase 5 — Red y reconexión.** Decisión de diseño clave: en vez de forzar un `RemoteGameGateway` dentro de la interfaz síncrona `IGameGateway` existente (hubiera obligado a convertir `apply()`/`startGame()` a streams y reescribir los tests ya existentes de `GameNotifier`), se optó por `RemoteGameNotifier` como clase separada que refleja el mismo `GameSessionState` — cero riesgo sobre lo construido en Fase 4. Queda pendiente, documentado en ROADMAP.md, todo lo de Fase 6 (mDNS real, bots, modo online, expansiones, publicación).
+
+---
+
+## [0.4.10] — 2026-07-09
+
+### Añadido — Fase 5: reconexión automática del cliente
+- `WsClient` reconecta solo con back-off exponencial (1s→16s) tras una caída no solicitada (`close()` explícito no la dispara); `messages`/`status`/`roomStream` siguen funcionando sin que quien los escucha tenga que volver a suscribirse
+
+### Corregido
+- `WsServer.close()` no cerraba los sockets ya conectados (`HttpServer.close(force: true)` no toca las conexiones que ya completaron el upgrade a WebSocket) — se filtraban sin avisar a los clientes del cierre; ahora se cierran explícitamente
+- 200 tests totales pasando
+
+---
+
+## [0.4.9] — 2026-07-09
+
+### Añadido — Fase 5: GameScreen/GameOverScreen sincronizados
+- `GameScreen`/`GameOverScreen` ya no muestran el placeholder fijo "esperando Fase 5" para los no-host: eligen `gameProvider`/`remoteGameProvider` según `isHost` y despachan a quien corresponda; el host activa `gameNetworkBridgeProvider`, el no-host conecta `RemoteGameNotifier` al `WsClient` que ya abrió el lobby
+- `PlayersHudWidget` muestra "Reconectando…" + icono de wifi apagado para `PlayerStatus.disconnected`
+- 198 tests totales pasando
+
+---
+
+## [0.4.8] — 2026-07-09
+
+### Añadido — Fase 5: puente host↔red
+- `gameNetworkBridgeProvider` — conecta `GameNotifier` (motor real, solo host) con `WsServer` (red): aplica `ActionMessage`s entrantes, contesta `ActionRejectedMessage` solo a quien mandó una acción inválida, y retransmite cada `GameState`/`GameEvent` como `GameStateMessage`/`GameEventMessage`; conecta también `WsServer.onPlayerDisconnected`/`onPlayerReconnected` a un `ReconnectionManager`
+- `IGameGateway`/`LocalGameGateway`/`GameNotifier` ganan `markPlayerDisconnected`/`markPlayerReconnected`
+
+### Corregido
+- `WsServer._onJoin` disparaba `onPlayerReconnected` para cualquier unión de un `playerId` ya conocido (no solo reconexiones reales tras una caída); `GameNotifier.markPlayerDisconnected`/`markPlayerReconnected` ahora omiten la retransmisión si el motor devolvió el mismo estado (no-op), encontrado por el test de integración del puente
+- 196 tests totales pasando
+
+---
+
+## [0.4.7] — 2026-07-09
+
+### Añadido — Fase 5: RemoteGameNotifier
+- `RemoteGameNotifier`/`remoteGameProvider` — refleja para un dispositivo no-host el mismo `GameSessionState` que ya produce `GameNotifier`, mandando las acciones locales por `ActionMessage` y reflejando `GameStateMessage`/`GameEventMessage`/`ActionRejectedMessage`; se decidió como clase separada (no una `RemoteGameGateway implements IGameGateway`) para no tener que convertir `apply()`/`startGame()` a streams ni reescribir los tests existentes de `GameNotifier`
+- `GameNotifier` gana `applyAction`/`rawStates`/`eliminateForDisconnect` para el puente host↔red (próxima pieza); `IGameGateway` gana `eliminatePlayerForDisconnect`, mismo patrón que `resolveNopeWindow`
+- 188 tests totales pasando
+
+---
+
+## [0.4.6] — 2026-07-09
+
+### Añadido — Fase 5: acceso al WsClient/WsServer del lobby
+- `ILobbyRepository`/`LobbyRepository`/`LobbyNotifier` exponen ahora `wsClient`/`wsServer` (getters aditivos, sin cambio de comportamiento) para que la partida reutilice la conexión que el lobby ya abrió en vez de crear una segunda
+
+---
+
+## [0.4.5] — 2026-07-09
+
+### Añadido — Fase 5: eliminación por desconexión en el motor
+- `GameEngine.markPlayerDisconnected`/`markPlayerReconnected`/`eliminatePlayerForDisconnect` — tres operaciones puras más (ninguna es un `TurnAction`, no pasan por `GameRules.validate`, mismo patrón que `resolveNopeWindow`) para que el `ReconnectionManager` tenga con qué actuar cuando expira el grace period: reutiliza el mismo camino de `eliminationOrder`/`WinCondition` que ya usa la eliminación por bomba
+- 170 tests totales pasando
+
+---
+
+## [0.4.4] — 2026-07-09
+
+### Añadido — Fase 5: ReconnectionManager
+- `ReconnectionManager` real (antes era solo un comentario `TODO`): un `Timer` de grace period por jugador desconectado, usando `GameConstants.reconnectTimeoutSeconds` (60s) por defecto; `cancelIfPending` lo cancela si reconecta a tiempo
+- 162 tests totales pasando
+
+---
+
+## [0.4.3] — 2026-07-09
+
+### Añadido — Fase 5: transporte de mensajes en partida
+- `WsMessage`: activados los mensajes de partida (`GameStateMessage`, `ActionMessage`) que antes eran stubs sin usar, y añadidos `GameEventMessage` (para que los no-host, sin motor local, disparen sonidos/animaciones) y `ActionRejectedMessage` (feedback dirigido cuando una acción de un cliente falla `GameRules.validate` en el host)
+- `WsServer` ahora enruta `ActionMessage` de verdad (antes caía al `default` y se perdía) por un nuevo stream `actionMessages`, y expone `broadcast()`/`sendToPlayer()` públicos
+- `WsServer.markGameStarted()` distingue una desconexión de lobby (comportamiento de siempre) de una desconexión a mitad de partida, que ahora dispara `onPlayerDisconnected` en vez de sacar al jugador de la sala — la capa de juego decide qué hacer (grace period, siguiente pieza de la fase)
+- 156 tests totales pasando
+
+---
+
+## [0.4.2] — 2026-07-09
+
+### Añadido — Fase 5: serialización del motor
+- `toJson()`/`fromJson()` manuales en todos los modelos puros del motor (`CardModel`, `PlayerModel`, `DeckModel`, `TurnModel`, `GameConfig`, `GameResult`, `GameState`) y en las dos jerarquías selladas (`TurnAction`, `GameEvent`), mismo estilo ya usado por los modelos del lobby — necesario para que el `GameState`/las acciones/los eventos viajen por WebSocket en el resto de la fase
+- `TurnAction` ahora extiende `Equatable` (era el único modelo del motor que no lo hacía); sin esto, la igualdad estructural de `GameState` se rompía en cuanto `pendingAction` contenía una instancia no-`const` (p. ej. una reconstruida desde JSON)
+- 149 tests totales pasando
 
 ---
 

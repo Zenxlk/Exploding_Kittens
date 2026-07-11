@@ -40,4 +40,18 @@ class TurnModel extends Equatable {
   @override
   List<Object?> get props =>
       [currentPlayerId, phase, actionsLeft, nopeChainCount];
+
+  Map<String, dynamic> toJson() => {
+        'currentPlayerId': currentPlayerId,
+        'phase': phase.name,
+        'actionsLeft': actionsLeft,
+        'nopeChainCount': nopeChainCount,
+      };
+
+  factory TurnModel.fromJson(Map<String, dynamic> j) => TurnModel(
+        currentPlayerId: j['currentPlayerId'] as String,
+        phase: TurnPhase.values.byName(j['phase'] as String),
+        actionsLeft: j['actionsLeft'] as int,
+        nopeChainCount: j['nopeChainCount'] as int,
+      );
 }

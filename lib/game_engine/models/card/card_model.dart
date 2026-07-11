@@ -15,4 +15,11 @@ class CardModel extends Equatable {
 
   @override
   String toString() => 'Card($type, $id)';
+
+  Map<String, dynamic> toJson() => {'id': id, 'type': type.name};
+
+  factory CardModel.fromJson(Map<String, dynamic> j) => CardModel(
+        id: j['id'] as String,
+        type: CardType.values.byName(j['type'] as String),
+      );
 }

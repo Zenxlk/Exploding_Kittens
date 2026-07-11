@@ -292,3 +292,108 @@ verdad de forma práctica necesita Fase 5 (para que el no-host también
 pueda jugar) o el modo bot/offline de Fase 6 (para seguir jugando ambas
 manos desde el host sin depender de la suerte del mazo). Audio tampoco se
 verificó (necesita oídos, no capturas).
+
+---
+
+## Fase 5 — Red y reconexión (verificado 2026-07-11)
+
+Verificado en 2 emuladores reales (`emulator-5554` host, `emulator-5556`
+cliente), a pedido explícito del usuario (excepción puntual a
+[[feedback_manual_testing]]). Descubrimiento UDP funcionó de entrada esta
+sesión (misma red virtual `netsimd`, sin necesitar el puente
+`adb forward`/`adb reverse` de la sección de Fase 4).
+
+### Confirmado funcionando de punta a punta
+
+1. **El no-host ya juega la partida real** — apenas arranca la partida ve
+   su propia mano y la mesa real, no el placeholder fijo de Fase 4
+   ("Esperando sincronización con el host…"). Captura:
+   `docs/screenshots/fase5/01_no_host_ve_mesa_real.png`.
+2. **Sincronización de estado en ambos sentidos** — se jugaron ~35 turnos
+   alternando quién robaba/jugaba desde cada dispositivo; mazo, manos y
+   turno se reflejaron casi al instante en el otro dispositivo en cada
+   ronda. El no-host jugó una carta `See the Future` y el
+   `SeeTheFutureOverlay` se disparó correctamente tras el viaje
+   cliente→host→broadcast. Captura:
+   `docs/screenshots/fase5/02_no_host_juega_see_the_future.png`.
+   - Hallazgo menor (no arreglado, preexistente de Fase 4): el overlay de
+     `SeeTheFuture` se le muestra a **ambos** jugadores, no solo a quien lo
+     jugó — es fiel al `GameState.seeTheFutureCards` compartido tal cual
+     ya funcionaba en un solo dispositivo; en el juego real debería ser
+     privado. Candidato para Fase 6.
+3. **`InsertBombOverlay`/`ExplosionOverlay` en el no-host** — bloqueados
+   desde Fase 4, ya confirmados: el no-host robó la Exploding Kitten, se
+   le mostró `InsertBombOverlay`, y mientras tanto el host vio "Esperando
+   a que Jugador esconda la bomba…". Capturas:
+   `docs/screenshots/fase5/03_insert_bomb_overlay_no_host.png`,
+   `docs/screenshots/fase5/04_host_esperando_defuse.png`.
+4. **`GameOverScreen` sincronizado en ambos dispositivos** — el no-host
+   explotó sin Defuse en un intento posterior (partida de 2 jugadores) y
+   el juego terminó automáticamente; ambos dispositivos mostraron el mismo
+   ranking, y el botón "Revancha" solo apareció en el host. Antes de esta
+   fase el no-host se quedaba con "no hay ningún resultado de partida"
+   para siempre. Capturas:
+   `docs/screenshots/fase5/05_gameover_sincronizado_no_host.png`,
+   `docs/screenshots/fase5/06_gameover_host_con_revancha.png`.
+5. **Grace period + eliminación por desconexión, extremo a extremo** — se
+   forzó el cierre completo de la app (`am force-stop`) en el no-host a
+   mitad de partida. El host mostró de inmediato "Reconectando…" con
+   icono de wifi apagado en `PlayersHudWidget`
+   (`docs/screenshots/fase5/07_reconectando_ui.png`). Al dejar pasar los
+   60s (`GameConstants.reconnectTimeoutSeconds`) sin que el jugador
+   volviera, se le eliminó automáticamente y — al ser partida de 2 — el
+   host pasó solo a `GameOverScreen` como ganador
+   (`docs/screenshots/fase5/08_timeout_elimina_termina_partida.png`).
+   Pipeline completo: `WsServer.onPlayerDisconnected` →
+   `ReconnectionManager.trackDisconnect` →
+   `GameNotifier.markPlayerDisconnected` (broadcast) → expira sin volver →
+   `eliminateForDisconnect` → `WinCondition` → `GameFinished`.
+6. Consola de ambos dispositivos sin excepciones ni crashes durante toda
+   la sesión.
+
+### Bugs encontrados y arreglados en esta sesión
+
+- **Rematch no navegaba al no-host** — al tocar "Revancha" en el host, el
+  no-host se quedaba varado en `GameOverScreen` mostrando "No hay ningún
+  resultado de partida" en vez de pasar a la partida nueva. Causa: el host
+  navega manualmente en `_rematch()`, pero nada disparaba la navegación
+  del lado del no-host cuando `remoteGameProvider` dejaba de estar en
+  `GameFinished`. Arreglado con un `ref.listen<GameSessionState>(remoteGameProvider, ...)`
+  en `GameOverScreen` que navega a `RouteNames.game` en cuanto pasa a
+  `GameRunning`. Verificado con una segunda revancha tras el fix: ya
+  navegó correctamente. Commit `fix(features): navigate non-host to
+  GameScreen when host starts a rematch`.
+
+### Hallazgo pendiente (no arreglado esta sesión — fuera del alcance de Fase 5)
+
+- **Recrear una sala sin salir de la anterior dentro de la misma sesión de
+  app deja un "servidor fantasma"**: tras terminar una partida y tocar
+  "Volver al menú" (que solo navega a Home, no llama a
+  `lobbyProvider.notifier.leaveRoom()`), crear una sala nueva reutiliza el
+  mismo `LobbyRepository` sin cerrar el `WsServer` anterior. El síntoma
+  observado: el cliente se unía y veía "2/5 jugadores, listo ✓", pero el
+  host se quedaba viendo "1/5, esperando jugadores" indefinidamente — el
+  join nunca le llegaba. Reproducido de forma consistente; se resolvió
+  para continuar las pruebas force-cerrando ambos procesos y empezando de
+  cero (que sí sincronizó correctamente, confirmando que no era un
+  problema del protocolo en sí). Es un bug real del ciclo de vida del
+  lobby (Fase 3), no de la sincronización de Fase 5 — candidato para
+  arreglarlo haciendo que las salidas de sala fuera de un flujo explícito
+  (p. ej. "Volver al menú" en `GameOverScreen`) llamen a `leaveRoom()`
+  antes de navegar. No se tocó en esta sesión por estar fuera del alcance
+  específico que se estaba verificando.
+
+### Nota de entorno
+
+- `adb shell svc wifi disable`/`enable` en el cliente **no cortó
+  realmente** la conexión TCP hacia el host en este entorno de
+  emuladores — la app siguió jugando con normalidad pese al ícono de wifi
+  apagado en la barra de estado. La red virtual subyacente (`netsimd`) no
+  depende del estado "wifi" reportado por el framework Android. No sirve
+  como método para simular una caída de red real en este entorno; usar
+  `am force-stop` (caída total del proceso, prueba el grace period +
+  eliminación) en su lugar. La reconexión automática del `WsClient` con
+  back-off (sin matar el proceso) ya está cubierta de forma determinística
+  por el test de integración real en loopback
+  (`test/network/websocket/ws_server_client_test.dart`), no dependiente de
+  las particularidades de red de un emulador.

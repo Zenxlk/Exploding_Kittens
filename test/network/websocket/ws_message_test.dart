@@ -52,7 +52,7 @@ void main() {
       roundTrip(const PongMessage());
     });
 
-    // ── phase-5 stubs ──────────────────────────────────────────────────────
+    // ── in-game (Fase 5) ───────────────────────────────────────────────────
     test('GameStateMessage conserva payload', () {
       final msg = GameStateMessage(stateJson: {'turn': 1});
       final restored = WsMessage.fromJson(msg.toJson()) as GameStateMessage;
@@ -67,6 +67,16 @@ void main() {
 
     test('PlayerReconnectedMessage', () {
       roundTrip(const PlayerReconnectedMessage(playerId: 'p2'));
+    });
+
+    test('GameEventMessage conserva payload', () {
+      final msg = GameEventMessage(eventJson: {'type': 'card_drawn'});
+      final restored = WsMessage.fromJson(msg.toJson()) as GameEventMessage;
+      expect(restored.eventJson, equals({'type': 'card_drawn'}));
+    });
+
+    test('ActionRejectedMessage', () {
+      roundTrip(const ActionRejectedMessage(message: 'no es tu turno'));
     });
 
     // ── tipo desconocido ────────────────────────────────────────────────────

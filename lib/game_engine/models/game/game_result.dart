@@ -15,4 +15,18 @@ class GameResult extends Equatable {
 
   @override
   List<Object?> get props => [winnerId, totalTurns, eliminationOrder];
+
+  Map<String, dynamic> toJson() => {
+        'winnerId': winnerId,
+        'winnerName': winnerName,
+        'totalTurns': totalTurns,
+        'eliminationOrder': eliminationOrder,
+      };
+
+  factory GameResult.fromJson(Map<String, dynamic> j) => GameResult(
+        winnerId: j['winnerId'] as String,
+        winnerName: j['winnerName'] as String,
+        totalTurns: j['totalTurns'] as int,
+        eliminationOrder: (j['eliminationOrder'] as List).cast<String>(),
+      );
 }

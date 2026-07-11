@@ -45,6 +45,14 @@ class _FakeGameNotifier extends GameNotifier {
   GameSessionState build() => _initial;
 }
 
+class _FakeRemoteGameNotifier extends RemoteGameNotifier {
+  _FakeRemoteGameNotifier(this._initial);
+  final GameSessionState _initial;
+
+  @override
+  GameSessionState build() => _initial;
+}
+
 const _room = LobbyRoom(
   id: 'room-1',
   hostId: 'host',
@@ -70,6 +78,10 @@ Widget _wrap({
     overrides: [
       lobbyProvider.overrideWith(() => _FakeLobbyNotifier(lobbyState)),
       gameProvider.overrideWith(() => _FakeGameNotifier(gameState)),
+      // El mismo estado en los dos: cada test decide con `localPlayerId` si
+      // es host o no, y GameOverScreen ya elige el provider correcto según
+      // eso — aquí no hace falta un estado distinto por provider.
+      remoteGameProvider.overrideWith(() => _FakeRemoteGameNotifier(gameState)),
       audioServiceProvider.overrideWithValue(_FakeAudioService()),
     ],
     child: const MaterialApp(home: GameOverScreen()),

@@ -24,4 +24,16 @@ class LocalGameGateway implements IGameGateway {
 
   @override
   GameState resolveNopeWindow() => _engine.resolveNopeWindow();
+
+  @override
+  GameState eliminatePlayerForDisconnect(String playerId) =>
+      _engine.eliminatePlayerForDisconnect(playerId);
+
+  @override
+  GameState markPlayerDisconnected(String playerId) =>
+      _engine.markPlayerDisconnected(playerId);
+
+  @override
+  GameState markPlayerReconnected(String playerId) =>
+      _engine.markPlayerReconnected(playerId);
 }

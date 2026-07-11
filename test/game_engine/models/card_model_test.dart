@@ -36,5 +36,11 @@ void main() {
       const b = CardModel(id: 'nope_2', type: CardType.nope);
       expect(a, isNot(equals(b)));
     });
+
+    test('toJson / fromJson round-trip conserva todos los campos', () {
+      const card = CardModel(id: 'tacocat_3', type: CardType.tacocat);
+      final restored = CardModel.fromJson(card.toJson());
+      expect(restored, equals(card));
+    });
   });
 }

@@ -60,5 +60,34 @@ void main() {
       expect(anaOpacity.opacity, lessThan(1.0));
       expect(betoOpacity.opacity, 1.0);
     });
+
+    testWidgets(
+      'muestra "Reconectando…" y el icono de wifi apagado para un jugador '
+      'desconectado',
+      (tester) async {
+        const players = [
+          PlayerModel(
+            id: 'p1',
+            name: 'Ana',
+            hand: [],
+            status: PlayerStatus.disconnected,
+          ),
+          PlayerModel(id: 'p2', name: 'Beto', hand: []),
+        ];
+
+        await tester.pumpWidget(
+          _wrap(
+            const PlayersHudWidget(players: players, currentPlayerId: 'p2'),
+          ),
+        );
+
+        expect(find.text('Reconectando…'), findsOneWidget);
+        expect(find.byIcon(Icons.wifi_off_rounded), findsOneWidget);
+        // Ana (desconectada) no muestra el contador de cartas, solo el
+        // mensaje de reconexión; Beto (activo) sí lo muestra -> un solo
+        // icono de carta en total, no dos.
+        expect(find.byIcon(Icons.style), findsOneWidget);
+      },
+    );
   });
 }

@@ -3,6 +3,7 @@ import '../card/card_model.dart';
 import '../deck/deck_model.dart';
 import '../player/player_model.dart';
 import '../player/player_status.dart';
+import '../turn/turn_action.dart';
 import '../turn/turn_model.dart';
 import 'game_config.dart';
 import 'game_result.dart';
@@ -114,4 +115,47 @@ class GameState extends Equatable {
         turnCount,
         eliminationOrder,
       ];
+
+  // `pendingAction` es `Object?` en el modelo, pero en la práctica siempre es
+  // un `TurnAction` concreto (ver `ActionProcessor.resolveNopeWindow`), así
+  // que se serializa con el serializador de `TurnAction`.
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'config': config.toJson(),
+        'players': players.map((p) => p.toJson()).toList(),
+        'deck': deck.toJson(),
+        'turn': turn.toJson(),
+        'phase': phase.name,
+        'pendingAction': (pendingAction as TurnAction?)?.toJson(),
+        'pendingBomb': pendingBomb?.toJson(),
+        'seeTheFutureCards': seeTheFutureCards?.map((c) => c.toJson()).toList(),
+        'result': result?.toJson(),
+        'turnCount': turnCount,
+        'eliminationOrder': eliminationOrder,
+      };
+
+  factory GameState.fromJson(Map<String, dynamic> j) => GameState(
+        id: j['id'] as String,
+        config: GameConfig.fromJson(j['config'] as Map<String, dynamic>),
+        players: (j['players'] as List)
+            .map((p) => PlayerModel.fromJson(p as Map<String, dynamic>))
+            .toList(),
+        deck: DeckModel.fromJson(j['deck'] as Map<String, dynamic>),
+        turn: TurnModel.fromJson(j['turn'] as Map<String, dynamic>),
+        phase: GamePhase.values.byName(j['phase'] as String),
+        pendingAction: j['pendingAction'] == null
+            ? null
+            : TurnAction.fromJson(j['pendingAction'] as Map<String, dynamic>),
+        pendingBomb: j['pendingBomb'] == null
+            ? null
+            : CardModel.fromJson(j['pendingBomb'] as Map<String, dynamic>),
+        seeTheFutureCards: (j['seeTheFutureCards'] as List?)
+            ?.map((c) => CardModel.fromJson(c as Map<String, dynamic>))
+            .toList(),
+        result: j['result'] == null
+            ? null
+            : GameResult.fromJson(j['result'] as Map<String, dynamic>),
+        turnCount: j['turnCount'] as int,
+        eliminationOrder: (j['eliminationOrder'] as List).cast<String>(),
+      );
 }

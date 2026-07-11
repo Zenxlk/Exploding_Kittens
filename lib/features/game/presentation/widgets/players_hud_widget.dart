@@ -46,24 +46,40 @@ class _PlayerBadge extends StatelessWidget {
   final bool isCurrentTurn;
 
   bool get _isEliminated => player.status == PlayerStatus.eliminated;
+  bool get _isDisconnected => player.status == PlayerStatus.disconnected;
 
   @override
   Widget build(BuildContext context) {
-    final opacity = _isEliminated ? 0.4 : 1.0;
+    final opacity = _isEliminated ? 0.4 : (_isDisconnected ? 0.6 : 1.0);
 
     return Opacity(
       opacity: opacity,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircleAvatar(
-            radius: 22,
-            backgroundColor:
-                isCurrentTurn ? AppColors.primary : AppColors.surface,
-            child: Text(
-              player.name.isNotEmpty ? player.name[0].toUpperCase() : '?',
-              style: AppTextStyles.title,
-            ),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              CircleAvatar(
+                radius: 22,
+                backgroundColor:
+                    isCurrentTurn ? AppColors.primary : AppColors.surface,
+                child: Text(
+                  player.name.isNotEmpty ? player.name[0].toUpperCase() : '?',
+                  style: AppTextStyles.title,
+                ),
+              ),
+              if (_isDisconnected)
+                const Positioned(
+                  right: -2,
+                  bottom: -2,
+                  child: Icon(
+                    Icons.wifi_off_rounded,
+                    size: 16,
+                    color: AppColors.secondary,
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 4),
           Text(
@@ -72,14 +88,24 @@ class _PlayerBadge extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.style, size: 12, color: AppColors.onBackground),
-              const SizedBox(width: 2),
-              Text('${player.cardCount}', style: AppTextStyles.caption),
-            ],
-          ),
+          if (_isDisconnected)
+            Text(
+              'Reconectando…',
+              style: AppTextStyles.caption.copyWith(
+                color: AppColors.secondary,
+                fontSize: 10,
+              ),
+            )
+          else
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.style,
+                    size: 12, color: AppColors.onBackground),
+                const SizedBox(width: 2),
+                Text('${player.cardCount}', style: AppTextStyles.caption),
+              ],
+            ),
         ],
       ),
     );
