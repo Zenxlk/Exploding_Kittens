@@ -2,11 +2,14 @@ import 'package:exploding_kittens/core/constants/app_constants.dart';
 import 'package:exploding_kittens/core/router/route_names.dart';
 import 'package:exploding_kittens/features/home/presentation/screens/home_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 // HomeScreen navigates via go_router's context.push, so it needs a real
 // GoRouter in the tree (not just a Navigator) for the button taps to work.
+// Wrapped in ProviderScope too: the "Cómo jugar" button routes to a real
+// RulesScreen (a ConsumerWidget), not a stub, since it's cheap to render.
 Widget _wrapWithRouter() {
   final router = GoRouter(
     initialLocation: RouteNames.home,
@@ -24,9 +27,13 @@ Widget _wrapWithRouter() {
         path: RouteNames.settings,
         builder: (_, __) => const Scaffold(body: Text('settings-screen')),
       ),
+      GoRoute(
+        path: RouteNames.rules,
+        builder: (_, __) => const Scaffold(body: Text('rules-screen')),
+      ),
     ],
   );
-  return MaterialApp.router(routerConfig: router);
+  return ProviderScope(child: MaterialApp.router(routerConfig: router));
 }
 
 void main() {
@@ -38,6 +45,7 @@ void main() {
       expect(find.text(AppConstants.appName), findsOneWidget);
       expect(find.text('Crear sala'), findsOneWidget);
       expect(find.text('Unirse a sala'), findsOneWidget);
+      expect(find.text('Cómo jugar'), findsOneWidget);
       expect(find.text('Ajustes'), findsOneWidget);
       expect(
         find.text('Proyecto de fans · Sin fines comerciales'),
@@ -76,6 +84,17 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('settings-screen'), findsOneWidget);
+    });
+
+    testWidgets('tapping "Cómo jugar" navigates to rules route',
+        (tester) async {
+      await tester.pumpWidget(_wrapWithRouter());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Cómo jugar'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('rules-screen'), findsOneWidget);
     });
   });
 }
