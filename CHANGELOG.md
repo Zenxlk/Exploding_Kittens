@@ -11,6 +11,17 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.5.1] — 2026-07-11
+
+### Corregido
+- Verificación manual de Fase 5 en 2 emuladores reales (ver `docs/VERIFICATION_LOG.md`): estado real jugado y sincronizado en ambos sentidos, `InsertBombOverlay`/`ExplosionOverlay`/`GameOverScreen` confirmados en el no-host, y el pipeline completo de grace period + eliminación por desconexión probado de punta a punta con una caída real del proceso
+- `GameOverScreen` no navegaba al no-host cuando el host iniciaba una revancha — se quedaba varado mostrando "no hay ningún resultado de partida". Ahora escucha `remoteGameProvider` y navega a la partida nueva en cuanto deja de estar en `GameFinished`
+
+### Documentado (sin arreglar, fuera de alcance de esta sesión)
+- Recrear una sala sin salir de la anterior en la misma sesión de app dejaba un "servidor fantasma" (el `WsServer` viejo nunca se cerraba) — bug real del ciclo de vida del lobby (Fase 3), no de la sincronización de Fase 5; candidato para una futura sesión
+
+---
+
 ## [0.5.0] — 2026-07-09
 
 ### Añadido — Fase 5 completa: red y reconexión
