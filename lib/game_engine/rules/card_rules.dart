@@ -7,12 +7,22 @@ import '../models/turn/turn_model.dart';
 /// Valida qué cartas puede jugar el jugador activo en cada fase.
 abstract final class CardRules {
   /// ¿Puede el jugador jugar esta carta ahora?
+  ///
+  /// Las cartas de gato nunca son jugables sueltas (`PlayCardAction`) — solo
+  /// tienen efecto en pareja/trío (`PlayCatPairAction`/`PlayCatTrioAction`).
+  /// Sin este chequeo, una `PlayCardAction` con una sola carta de gato pasaba
+  /// la validación igual, la carta se descartaba sin ningún efecto y el
+  /// turno no avanzaba — un "agujero negro" solo evitado hoy porque la UI
+  /// deshabilita el botón "Jugar" para ese caso (ver `game_table_view.dart`,
+  /// `_CatCardWaitingForPair`); cualquier otro camino (red, bots) lo habría
+  /// disparado igual.
   static bool canPlay(CardModel card, GameState state) {
     final player = state.currentPlayer;
     if (player == null) return false;
     if (player.id != state.turn.currentPlayerId) return false;
     if (state.turn.phase != TurnPhase.playing) return false;
     if (!card.type.isPlayable) return false;
+    if (card.type.isCatCard) return false;
     if (!player.hand.any((c) => c.id == card.id)) return false;
     return true;
   }
