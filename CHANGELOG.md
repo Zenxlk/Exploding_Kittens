@@ -11,6 +11,16 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.5.6] — 2026-07-11
+
+### Corregido
+- `MdnsDiscoverer` no eliminaba nunca una sala descubierta: si el host cerraba la app sin un cierre limpio, la sala quedaba listada en "Unirse a sala" indefinidamente. Ahora se poda cualquier sala cuyo último beacon tenga más de `staleAfter` (10s por defecto, ~3 beacons perdidos)
+
+### Limpieza
+- Quitado un TODO obsoleto en `LobbyRepository`: `_cleanup()` ya cancelaba la suscripción que mencionaba, la nota nunca se actualizó
+
+---
+
 ## [0.5.5] — 2026-07-11
 
 ### Corregido
