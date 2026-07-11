@@ -2,6 +2,7 @@ import '../../core/errors/exceptions.dart';
 import '../models/card/card_model.dart';
 import '../models/game/game_state.dart';
 import '../models/turn/turn_action.dart';
+import '../models/turn/turn_model.dart';
 import 'card_rules.dart';
 
 /// Orquestador de reglas. Punto único de validación antes de aplicar acciones.
@@ -10,6 +11,7 @@ abstract final class GameRules {
     switch (action) {
       case DrawCardAction():
         _mustBeCurrentPlayer(action.playerId, state);
+        _mustBeInPhase(state, TurnPhase.playing);
       case PlayCardAction(:final card):
         _mustBeCurrentPlayer(action.playerId, state);
         _mustBeAbleToPlay(card, state);
@@ -20,6 +22,7 @@ abstract final class GameRules {
         _targetMustNotBeSelf(action.playerId, targetPlayerId);
       case PlayCatPairAction(:final cards, :final targetPlayerId):
         _mustBeCurrentPlayer(action.playerId, state);
+        _mustBeInPhase(state, TurnPhase.playing);
         if (!CardRules.isValidCatPair(cards)) {
           throw const InvalidActionException('Par de gatos inválido');
         }
@@ -28,6 +31,7 @@ abstract final class GameRules {
         _targetMustNotBeSelf(action.playerId, targetPlayerId);
       case PlayCatTrioAction(:final cards, :final targetPlayerId):
         _mustBeCurrentPlayer(action.playerId, state);
+        _mustBeInPhase(state, TurnPhase.playing);
         if (!CardRules.isValidCatTrio(cards)) {
           throw const InvalidActionException('Trío de gatos inválido');
         }
@@ -36,6 +40,12 @@ abstract final class GameRules {
         _targetMustNotBeSelf(action.playerId, targetPlayerId);
       case DefuseBombAction():
         _mustBeCurrentPlayer(action.playerId, state);
+        _mustBeInPhase(state, TurnPhase.resolving);
+        if (state.pendingBomb == null) {
+          throw const InvalidActionException(
+            'No hay ninguna bomba pendiente de esconder',
+          );
+        }
         if (!CardRules.canDefuse(state.currentPlayer!)) {
           throw const InvalidActionException('No tienes Defuse');
         }
@@ -51,6 +61,22 @@ abstract final class GameRules {
   static void _mustBeCurrentPlayer(String playerId, GameState state) {
     if (state.turn.currentPlayerId != playerId) {
       throw const InvalidActionException('No es tu turno');
+    }
+  }
+
+  /// `PlayCardAction`/`PlayFavorAction` ya quedan cubiertas por el chequeo de
+  /// fase dentro de `CardRules.canPlay`; `DrawCardAction`, los pares/tríos de
+  /// gato y `DefuseBombAction` necesitaban el mismo candado explícito. Sin
+  /// esto, una acción "atrasada" por latencia de red (p. ej. un robo que
+  /// salió justo antes de que se abriera una ventana de Nope, y llega al
+  /// host cuando esta ya está abierta) pasaba la validación igual,
+  /// `TurnManager.advance` limpiaba `pendingAction` de golpe y cancelaba el
+  /// `Timer` de `resolveNopeWindow` en `GameNotifier` (se reprograma en cada
+  /// cambio de estado) — el Favor/par de gatos pendiente se perdía sin
+  /// resolverse y el turno quedaba en un estado inconsistente.
+  static void _mustBeInPhase(GameState state, TurnPhase phase) {
+    if (state.turn.phase != phase) {
+      throw const InvalidActionException('No puedes hacer eso ahora');
     }
   }
 
