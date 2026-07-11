@@ -431,6 +431,41 @@ void main() {
     );
 
     testWidgets(
+      'no muestra el overlay de See the Future a quien no jugó la carta',
+      (tester) async {
+        const me = PlayerModel(id: 'me', name: 'Ana', hand: []);
+        const other = PlayerModel(id: 'other', name: 'Beto', hand: []);
+
+        await tester.pumpWidget(
+          _wrap(
+            GameTableView(
+              // GameState.seeTheFutureCards viaja compartido en la red; el
+              // turno es de "other" (quien la jugó), no de "me" — el
+              // overlay no debería verse en este dispositivo.
+              gameState: _state(
+                players: const [me, other],
+                currentPlayerId: 'other',
+                seeTheFutureCards: const [
+                  CardModel(id: 'a', type: CardType.skip),
+                ],
+              ),
+              localPlayerId: 'me',
+              onDraw: () {},
+              onPlaySimpleCard: (_) {},
+              onPlayFavor: (_, __) {},
+              onPlayCatPair: (_, __) {},
+              onPlayNope: (_) {},
+              onDefuseBomb: (_, __) {},
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Ves las próximas 3 cartas'), findsNothing);
+      },
+    );
+
+    testWidgets(
       'muestra el overlay de Nope y jugar la carta invoca onPlayNope',
       (tester) async {
         const nope = CardModel(id: 'a', type: CardType.nope);

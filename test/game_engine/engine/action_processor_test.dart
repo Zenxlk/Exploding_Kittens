@@ -158,6 +158,138 @@ void main() {
       expect(resolved.playerById('p1')!.hand, isEmpty);
     });
 
+    test(
+      'tras resolver un Favor, el turno sigue en el mismo jugador y su '
+      'siguiente robo sí pasa el turno al objetivo',
+      () {
+        const favorCard = CardModel(id: 'favor-1', type: CardType.favor);
+        const targetCard = CardModel(id: 'target-1', type: CardType.skip);
+        const nextCard = CardModel(id: 'next-1', type: CardType.tacocat);
+
+        final p1 = PlayerModel(id: 'p1', name: 'A', hand: const [favorCard]);
+        final p2 = PlayerModel(id: 'p2', name: 'B', hand: const [targetCard]);
+
+        final state = baseState(
+          players: [p1, p2],
+          deck: const DeckModel(drawPile: [nextCard], discardPile: []),
+          currentPlayerId: 'p1',
+        );
+
+        final afterPlay = ActionProcessor.process(
+          const PlayFavorAction(
+            playerId: 'p1',
+            card: favorCard,
+            targetPlayerId: 'p2',
+          ),
+          state,
+        );
+        final resolved = ActionProcessor.resolveNopeWindow(afterPlay);
+
+        // El turno sigue siendo de p1 — jugar Favor no lo termina.
+        expect(resolved.turn.currentPlayerId, 'p1');
+        expect(resolved.turn.phase, TurnPhase.playing);
+
+        final afterDraw = ActionProcessor.process(
+          const DrawCardAction(playerId: 'p1'),
+          resolved,
+        );
+
+        // El robo normal de p1 sí debe pasar el turno a p2.
+        expect(afterDraw.turn.currentPlayerId, 'p2');
+        expect(afterDraw.turn.phase, TurnPhase.playing);
+        expect(afterDraw.turnCount, resolved.turnCount + 1);
+      },
+    );
+
+    test(
+      'tras resolver un par de gatos, el robo del jugador activo sí pasa '
+      'el turno',
+      () {
+        const cat1 = CardModel(id: 'cat-1', type: CardType.tacocat);
+        const cat2 = CardModel(id: 'cat-2', type: CardType.tacocat);
+        const targetCard = CardModel(id: 'target-1', type: CardType.skip);
+        const nextCard = CardModel(id: 'next-1', type: CardType.attack);
+
+        final p1 = PlayerModel(id: 'p1', name: 'A', hand: const [cat1, cat2]);
+        final p2 = PlayerModel(id: 'p2', name: 'B', hand: const [targetCard]);
+
+        final state = baseState(
+          players: [p1, p2],
+          deck: const DeckModel(drawPile: [nextCard], discardPile: []),
+          currentPlayerId: 'p1',
+        );
+
+        final afterPlay = ActionProcessor.process(
+          const PlayCatPairAction(
+            playerId: 'p1',
+            cards: [cat1, cat2],
+            targetPlayerId: 'p2',
+          ),
+          state,
+        );
+        final resolved = ActionProcessor.resolveNopeWindow(afterPlay);
+
+        expect(resolved.turn.currentPlayerId, 'p1');
+        expect(resolved.turn.phase, TurnPhase.playing);
+        expect(resolved.playerById('p1')!.hand, [targetCard]);
+
+        final afterDraw = ActionProcessor.process(
+          const DrawCardAction(playerId: 'p1'),
+          resolved,
+        );
+
+        expect(afterDraw.turn.currentPlayerId, 'p2');
+      },
+    );
+
+    test(
+      'un Nope que cancela un Favor deja el turno intacto para que el '
+      'jugador activo lo siga jugando con normalidad',
+      () {
+        const favorCard = CardModel(id: 'favor-1', type: CardType.favor);
+        const targetCard = CardModel(id: 'target-1', type: CardType.skip);
+        const nopeCard = CardModel(id: 'nope-1', type: CardType.nope);
+        const nextCard = CardModel(id: 'next-1', type: CardType.attack);
+
+        final p1 = PlayerModel(id: 'p1', name: 'A', hand: const [favorCard]);
+        final p2 = PlayerModel(
+          id: 'p2',
+          name: 'B',
+          hand: const [targetCard, nopeCard],
+        );
+
+        final state = baseState(
+          players: [p1, p2],
+          deck: const DeckModel(drawPile: [nextCard], discardPile: []),
+          currentPlayerId: 'p1',
+        );
+
+        final afterPlay = ActionProcessor.process(
+          const PlayFavorAction(
+            playerId: 'p1',
+            card: favorCard,
+            targetPlayerId: 'p2',
+          ),
+          state,
+        );
+        final afterNope = ActionProcessor.process(
+          const NopeAction(playerId: 'p2', nopeCard: nopeCard),
+          afterPlay,
+        );
+        final resolved = ActionProcessor.resolveNopeWindow(afterNope);
+
+        expect(resolved.turn.currentPlayerId, 'p1');
+        expect(resolved.turn.phase, TurnPhase.playing);
+
+        final afterDraw = ActionProcessor.process(
+          const DrawCardAction(playerId: 'p1'),
+          resolved,
+        );
+
+        expect(afterDraw.turn.currentPlayerId, 'p2');
+      },
+    );
+
     test('Shuffle no baraja el mazo hasta resolver la ventana', () {
       const shuffleCard = CardModel(id: 'shuffle-1', type: CardType.shuffle);
       final drawPile = List.generate(

@@ -75,15 +75,29 @@ class HomeScreen extends StatelessWidget {
 
               const Gap(28),
 
-              // ── Ajustes ───────────────────────────────────────
-              TextButton.icon(
-                onPressed: () => context.push(RouteNames.settings),
-                icon: const Icon(Icons.settings_outlined, size: 18),
-                label: const Text('Ajustes'),
-                style: TextButton.styleFrom(
-                  foregroundColor:
-                      AppColors.onBackground.withValues(alpha: 0.65),
-                ),
+              // ── Cómo jugar / Ajustes ────────────────────────────
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextButton.icon(
+                    onPressed: () => context.push(RouteNames.rules),
+                    icon: const Icon(Icons.menu_book_outlined, size: 18),
+                    label: const Text('Cómo jugar'),
+                    style: TextButton.styleFrom(
+                      foregroundColor:
+                          AppColors.onBackground.withValues(alpha: 0.65),
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => context.push(RouteNames.settings),
+                    icon: const Icon(Icons.settings_outlined, size: 18),
+                    label: const Text('Ajustes'),
+                    style: TextButton.styleFrom(
+                      foregroundColor:
+                          AppColors.onBackground.withValues(alpha: 0.65),
+                    ),
+                  ),
+                ],
               ).animate().fadeIn(delay: 740.ms, duration: 400.ms),
 
               const Spacer(),

@@ -86,14 +86,14 @@ y su estado de implementación en este proyecto.
 |-------|-------------|
 | Mira las 3 cartas de arriba del mazo (privado) | ✅ |
 | No cambia el orden del mazo | ✅ |
-| El jugador activo es el único que ve las cartas | ✅ (evento `SeeTheFutureEvent`) |
+| El jugador activo es el único que ve las cartas | ✅ `GameState.seeTheFutureCards` sigue viajando compartido en la red (no hay canal privado por jugador todavía), pero `GameTableView` ahora solo muestra el overlay si es el turno del jugador local — cerrado el hallazgo de Fase 5 en `docs/VERIFICATION_LOG.md` |
 
 ### Cartas Gato (Tacocat, Rainbow Ralphing Cat, Bearded Dragon, Cattermelon, Hairy Potato Cat)
 | Regla | Implementada |
 |-------|-------------|
 | Sin efecto jugadas solas | ✅ (`isCatCard` sin handler específico) |
 | Par del mismo tipo → robar carta aleatoria de otro jugador | ✅ |
-| Trío del mismo tipo → ver la mano del objetivo y elegir | ✅ |
+| Trío del mismo tipo → ver la mano del objetivo y elegir | ⚠️ Motor completo (`PlayCatTrioAction`), pero sin UI que lo dispare — elegir una carta concreta de la mano rival necesita su propio diseño (el actor no puede ver esa mano). No disponible para el jugador todavía |
 | Par/trío se pueden nopear | ✅ |
 
 ---
@@ -110,10 +110,12 @@ y su estado de implementación en este proyecto.
 
 ## Reglas pendientes de implementar
 
+> Fases 1 a 5 están completas (ver `ROADMAP.md`); lo que queda pendiente de
+> reglas es exclusivamente Fase 6 (expansiones) más el trío de gatos,
+> señalado arriba con ⚠️.
+
 | Regla | Fase | Notas |
 |-------|------|-------|
-| Ventana de Nope con temporizador visual en UI | Fase 4 | Lógica engine ✅, solo falta UI |
-| Jugador desconectado — grace period | Fase 5 | `ReconnectionManager` stub |
 | Ver 5 cartas (See the Future de Imploding Kittens) | Fase 6 (expansión) | |
 | Barking Kittens (cooperativo 2 jugadores) | Fase 6 (expansión) | |
 | Imploding Kitten (6 jugadores) | Fase 6 (expansión) | |
@@ -125,7 +127,7 @@ y su estado de implementación en este proyecto.
 
 | Aspecto | Juego físico | Esta implementación |
 |---------|-------------|---------------------|
-| Favor — quién elige la carta | El objetivo elige | El objetivo elige (en Fase 4 habrá un prompt al jugador objetivo) |
-| Ver el futuro — privacidad | El jugador lo ve en secreto | Evento privado por WebSocket al jugador activo |
-| Inserción de bomba | El jugador físicamente la mete | El jugador elige posición en un overlay (Fase 4) |
+| Favor — quién elige la carta | El objetivo elige | El objetivo elige, vía `FavorTargetOverlay` |
+| Ver el futuro — privacidad | El jugador lo ve en secreto | Filtrado por turno en el cliente; el dato en sí sigue viajando compartido en `GameState` (sin canal privado por jugador todavía) |
+| Inserción de bomba | El jugador físicamente la mete | El jugador elige posición en `InsertBombOverlay` |
 | Reconocimiento de cartas | Visual directo | Requiere trust en modo red (sin verificación criptográfica en MVP) |

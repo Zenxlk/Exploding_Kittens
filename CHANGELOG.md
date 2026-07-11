@@ -11,6 +11,41 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.5.6] — 2026-07-11
+
+### Corregido
+- `MdnsDiscoverer` no eliminaba nunca una sala descubierta: si el host cerraba la app sin un cierre limpio, la sala quedaba listada en "Unirse a sala" indefinidamente. Ahora se poda cualquier sala cuyo último beacon tenga más de `staleAfter` (10s por defecto, ~3 beacons perdidos)
+
+### Limpieza
+- Quitado un TODO obsoleto en `LobbyRepository`: `_cleanup()` ya cancelaba la suscripción que mencionaba, la nota nunca se actualizó
+
+---
+
+## [0.5.5] — 2026-07-11
+
+### Corregido
+- Revisión de bugs y pendientes documentados de Fase 1 a 5: "Volver al menú" en `GameOverScreen` ahora llama `leaveRoom()` antes de navegar — cierra el "servidor fantasma" reportado en Fase 5 (crear/unirse a una sala nueva sin salir de la anterior dejaba el `WsServer`/conexión previos vivos y el host nunca veía al jugador nuevo)
+- El overlay de `See the Future` se le mostraba a los dos jugadores en red, no solo a quien jugó la carta (hallazgo de la verificación de Fase 5); ahora `GameTableView` lo filtra por turno
+
+### Documentación
+- `docs/GAME_RULES.md` sincronizado con `ROADMAP.md` (ya no lista como pendiente la ventana de Nope ni el grace period de reconexión, ambos completos hace tiempo) y actualizado con el estado real del trío de gatos (motor completo, sin UI todavía)
+
+---
+
+## [0.5.4] — 2026-07-11
+
+### Agregado
+- Pantalla "Cómo jugar" accesible desde el menú principal: explica en criollo el objetivo, el reparto inicial, el turno y cada una de las 13 cartas del juego (con su arte real o placeholder), aclarando que el trío de gatos todavía no está soportado en esta versión
+
+---
+
+## [0.5.3] — 2026-07-11
+
+### Corregido
+- Reportado por el usuario: el turno se quedaba "pegado" después de que le robaran una carta (Favor/par de gatos). `GameRules.validate` solo chequeaba la fase del turno para `PlayCardAction`/`PlayFavorAction`/`NopeAction` — `DrawCardAction`, pares/tríos de gato y `DefuseBombAction` no tenían ese candado. Un robo que llegaba justo cuando se abría una ventana de Nope (por latencia de red) pasaba la validación igual, y al limpiar `pendingAction` cancelaba de paso el `Timer` que iba a resolver el Favor/par pendiente — se perdía sin resolverse. Las cuatro acciones ahora exigen la fase de turno correcta
+
+---
+
 ## [0.5.2] — 2026-07-11
 
 ### Corregido

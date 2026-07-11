@@ -207,8 +207,13 @@ class _GameTableViewState extends State<GameTableView> {
     final selection = _classifySelection(selectedCards);
     final topDiscard = widget.gameState.deck.topDiscard;
     final seeTheFutureCards = widget.gameState.seeTheFutureCards;
+    // GameState.seeTheFutureCards viaja compartido en la red (no hay un
+    // canal privado por jugador todavía — ver docs/GAME_RULES.md), así que
+    // sin este chequeo el overlay se le mostraba también a quien no jugó la
+    // carta. Solo el jugador activo pudo haberla jugado (GameRules.validate
+    // exige ser el jugador actual), así que alcanza con filtrar por turno.
     final showSeeTheFuture =
-        seeTheFutureCards != null && !_seeTheFutureDismissed;
+        seeTheFutureCards != null && _isMyTurn && !_seeTheFutureDismissed;
     final nopeWindowOpen = widget.gameState.turn.phase == TurnPhase.nopeWindow;
     final myNopeCards = hand.where((c) => c.type == CardType.nope).toList();
     final resolvingMyBomb = _isMyTurn &&
