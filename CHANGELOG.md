@@ -11,6 +11,13 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.5.3] — 2026-07-11
+
+### Corregido
+- Reportado por el usuario: el turno se quedaba "pegado" después de que le robaran una carta (Favor/par de gatos). `GameRules.validate` solo chequeaba la fase del turno para `PlayCardAction`/`PlayFavorAction`/`NopeAction` — `DrawCardAction`, pares/tríos de gato y `DefuseBombAction` no tenían ese candado. Un robo que llegaba justo cuando se abría una ventana de Nope (por latencia de red) pasaba la validación igual, y al limpiar `pendingAction` cancelaba de paso el `Timer` que iba a resolver el Favor/par pendiente — se perdía sin resolverse. Las cuatro acciones ahora exigen la fase de turno correcta
+
+---
+
 ## [0.5.2] — 2026-07-11
 
 ### Corregido
