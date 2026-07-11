@@ -167,6 +167,32 @@ class GameNotifier extends Notifier<GameSessionState> {
     _setFromGameState(_gateway.eliminatePlayerForDisconnect(playerId));
   }
 
+  /// [playerId] se desconectó a mitad de partida — arranca su grace period
+  /// (Fase 5, `WsServer.onPlayerDisconnected` vía el puente host↔red).
+  ///
+  /// `WsServer.onPlayerReconnected`/`onPlayerDisconnected` pueden dispararse
+  /// para un jugador que ya estaba `active`/no estaba `disconnected` (p. ej.
+  /// `_onJoin` los llama para cualquier join de un id ya conocido, no solo
+  /// para una reconexión real tras una caída) — el motor ya lo trata como
+  /// no-op, pero solo re-emitimos el estado si de verdad cambió, para no
+  /// retransmitir un `GameState` idéntico a todos los clientes.
+  void markPlayerDisconnected(String playerId) {
+    final current = state;
+    if (current is! GameRunning) return;
+    final next = _gateway.markPlayerDisconnected(playerId);
+    if (next == current.state) return;
+    _setFromGameState(next);
+  }
+
+  /// [playerId] reconectó a tiempo (Fase 5, `WsServer.onPlayerReconnected`).
+  void markPlayerReconnected(String playerId) {
+    final current = state;
+    if (current is! GameRunning) return;
+    final next = _gateway.markPlayerReconnected(playerId);
+    if (next == current.state) return;
+    _setFromGameState(next);
+  }
+
   // ── internals ────────────────────────────────────────────────────────────
 
   String? _apply(TurnAction action) {

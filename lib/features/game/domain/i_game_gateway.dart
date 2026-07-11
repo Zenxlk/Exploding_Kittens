@@ -22,4 +22,10 @@ abstract interface class IGameGateway {
   /// volviera: lo elimina de la partida. No es un `TurnAction`, igual que
   /// `resolveNopeWindow`.
   GameState eliminatePlayerForDisconnect(String playerId);
+
+  /// Marca a [playerId] como desconectado mientras corre su grace period.
+  GameState markPlayerDisconnected(String playerId);
+
+  /// [playerId] reconectó a tiempo: vuelve a estar activo.
+  GameState markPlayerReconnected(String playerId);
 }

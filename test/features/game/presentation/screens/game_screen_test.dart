@@ -63,6 +63,14 @@ class _FakeGameGateway implements IGameGateway {
   @override
   GameState eliminatePlayerForDisconnect(String playerId) =>
       throw UnimplementedError();
+
+  @override
+  GameState markPlayerDisconnected(String playerId) =>
+      throw UnimplementedError();
+
+  @override
+  GameState markPlayerReconnected(String playerId) =>
+      throw UnimplementedError();
 }
 
 const _room = LobbyRoom(
