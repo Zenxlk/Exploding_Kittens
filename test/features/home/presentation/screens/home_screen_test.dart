@@ -1,4 +1,7 @@
+import 'package:exploding_kittens/core/audio/audio_service.dart';
+import 'package:exploding_kittens/core/audio/i_audio_service.dart';
 import 'package:exploding_kittens/core/constants/app_constants.dart';
+import 'package:exploding_kittens/core/constants/asset_paths.dart';
 import 'package:exploding_kittens/core/router/route_names.dart';
 import 'package:exploding_kittens/features/home/presentation/screens/home_screen.dart';
 import 'package:flutter/material.dart';
@@ -6,11 +9,33 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
+class _RecordingAudioService implements IAudioService {
+  final List<String> musicCalls = [];
+
+  @override
+  Future<void> playEffect(String assetPath, {required double volume}) async {}
+
+  @override
+  Future<void> playMusic(
+    String assetPath, {
+    required bool enabled,
+    required double volume,
+  }) async {
+    musicCalls.add(assetPath);
+  }
+
+  @override
+  Future<void> stopMusic() async {}
+
+  @override
+  Future<void> dispose() async {}
+}
+
 // HomeScreen navigates via go_router's context.push, so it needs a real
 // GoRouter in the tree (not just a Navigator) for the button taps to work.
 // Wrapped in ProviderScope too: the "Cómo jugar" button routes to a real
 // RulesScreen (a ConsumerWidget), not a stub, since it's cheap to render.
-Widget _wrapWithRouter() {
+Widget _wrapWithRouter({IAudioService? audioService}) {
   final router = GoRouter(
     initialLocation: RouteNames.home,
     routes: [
@@ -33,7 +58,13 @@ Widget _wrapWithRouter() {
       ),
     ],
   );
-  return ProviderScope(child: MaterialApp.router(routerConfig: router));
+  return ProviderScope(
+    overrides: [
+      if (audioService != null)
+        audioServiceProvider.overrideWithValue(audioService),
+    ],
+    child: MaterialApp.router(routerConfig: router),
+  );
 }
 
 void main() {
@@ -95,6 +126,16 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('rules-screen'), findsOneWidget);
+    });
+
+    testWidgets('empieza a reproducir la música de menú al montarse', (
+      tester,
+    ) async {
+      final audioService = _RecordingAudioService();
+      await tester.pumpWidget(_wrapWithRouter(audioService: audioService));
+      await tester.pumpAndSettle();
+
+      expect(audioService.musicCalls, contains(AssetPaths.musicMenu));
     });
   });
 }
