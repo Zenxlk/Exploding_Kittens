@@ -11,6 +11,15 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.4.9] — 2026-07-09
+
+### Añadido — Fase 5: GameScreen/GameOverScreen sincronizados
+- `GameScreen`/`GameOverScreen` ya no muestran el placeholder fijo "esperando Fase 5" para los no-host: eligen `gameProvider`/`remoteGameProvider` según `isHost` y despachan a quien corresponda; el host activa `gameNetworkBridgeProvider`, el no-host conecta `RemoteGameNotifier` al `WsClient` que ya abrió el lobby
+- `PlayersHudWidget` muestra "Reconectando…" + icono de wifi apagado para `PlayerStatus.disconnected`
+- 198 tests totales pasando
+
+---
+
 ## [0.4.8] — 2026-07-09
 
 ### Añadido — Fase 5: puente host↔red
