@@ -26,6 +26,14 @@ class _FakeLobbyNotifier extends LobbyNotifier {
   LobbyState build() => _initial;
 }
 
+class _FakeRemoteGameNotifier extends RemoteGameNotifier {
+  _FakeRemoteGameNotifier(this._initial);
+  final GameSessionState _initial;
+
+  @override
+  GameSessionState build() => _initial;
+}
+
 class _FakeAudioService implements IAudioService {
   @override
   Future<void> playEffect(String assetPath, {required double volume}) async {}
@@ -85,12 +93,15 @@ const _room = LobbyRoom(
 Widget _wrap({
   required LobbyState lobbyState,
   required _FakeGameGateway gateway,
+  RemoteGameNotifier Function()? remoteNotifierFactory,
 }) {
   return ProviderScope(
     overrides: [
       lobbyProvider.overrideWith(() => _FakeLobbyNotifier(lobbyState)),
       gameProvider.overrideWith(() => GameNotifier(gateway: gateway)),
       audioServiceProvider.overrideWithValue(_FakeAudioService()),
+      if (remoteNotifierFactory != null)
+        remoteGameProvider.overrideWith(remoteNotifierFactory),
     ],
     child: const MaterialApp(home: GameScreen()),
   );
@@ -128,7 +139,7 @@ void main() {
     });
 
     testWidgets(
-      'un jugador no-host ve el mensaje de espera de sincronización',
+      'un jugador no-host sin GameState aún ve el mensaje de reparto',
       (tester) async {
         await tester.pumpWidget(
           _wrap(
@@ -138,10 +149,38 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(
-          find.textContaining('Esperando sincronización'),
-          findsOneWidget,
+        expect(find.text('Repartiendo cartas…'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'un jugador no-host con partida en curso ve la mesa vía '
+      'RemoteGameNotifier',
+      (tester) async {
+        final state = GameState(
+          id: 'g1',
+          config: const GameConfig(playerCount: 2),
+          players: const [
+            PlayerModel(id: 'host', name: 'Ana', hand: []),
+            PlayerModel(id: 'p2', name: 'Beto', hand: []),
+          ],
+          deck: const DeckModel(drawPile: [], discardPile: []),
+          turn: TurnModel(currentPlayerId: 'host', phase: TurnPhase.playing),
+          phase: GamePhase.playing,
         );
+
+        await tester.pumpWidget(
+          _wrap(
+            lobbyState: const LobbyInRoom(room: _room, localPlayerId: 'p2'),
+            gateway: _FakeGameGateway(),
+            remoteNotifierFactory: () =>
+                _FakeRemoteGameNotifier(GameRunning(state: state)),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Ana'), findsOneWidget);
+        expect(find.text('Beto'), findsOneWidget);
       },
     );
 

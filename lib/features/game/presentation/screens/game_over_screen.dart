@@ -17,9 +17,9 @@ import 'package:exploding_kittens/game_engine/models/player/player_model.dart';
 
 /// Resultado de la partida: ganador, ranking por orden real de eliminación
 /// (último eliminado queda 2º, el primero en explotar queda último) y
-/// revancha. Solo el host puede iniciarla hoy — mismo límite que
-/// `GameScreen`: solo el host corre el `GameEngine` real hasta que la Fase 5
-/// sincronice el estado por red.
+/// revancha. La revancha sigue siendo solo del host (mismo límite que
+/// `GameScreen`: solo el host corre el `GameEngine` real), pero el resultado
+/// en sí ya se sincroniza a los no-host vía `remoteGameProvider`.
 class GameOverScreen extends ConsumerStatefulWidget {
   const GameOverScreen({super.key});
 
@@ -58,8 +58,10 @@ class _GameOverScreenState extends ConsumerState<GameOverScreen> {
   Widget build(BuildContext context) {
     ref.listen(settingsProvider, (_, __) => _syncMusic());
 
-    final sessionState = ref.watch(gameProvider);
     final lobbyState = ref.watch(lobbyProvider);
+    final isHostDevice = lobbyState is! LobbyInRoom || lobbyState.isHost;
+    final sessionState =
+        isHostDevice ? ref.watch(gameProvider) : ref.watch(remoteGameProvider);
 
     if (sessionState is! GameFinished) {
       return Scaffold(
