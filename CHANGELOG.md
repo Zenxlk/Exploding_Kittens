@@ -11,6 +11,13 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.5.4] — 2026-07-11
+
+### Agregado
+- Pantalla "Cómo jugar" accesible desde el menú principal: explica en criollo el objetivo, el reparto inicial, el turno y cada una de las 13 cartas del juego (con su arte real o placeholder), aclarando que el trío de gatos todavía no está soportado en esta versión
+
+---
+
 ## [0.5.3] — 2026-07-11
 
 ### Corregido
