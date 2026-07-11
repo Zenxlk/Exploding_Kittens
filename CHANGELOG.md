@@ -11,6 +11,17 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.5.5] — 2026-07-11
+
+### Corregido
+- Revisión de bugs y pendientes documentados de Fase 1 a 5: "Volver al menú" en `GameOverScreen` ahora llama `leaveRoom()` antes de navegar — cierra el "servidor fantasma" reportado en Fase 5 (crear/unirse a una sala nueva sin salir de la anterior dejaba el `WsServer`/conexión previos vivos y el host nunca veía al jugador nuevo)
+- El overlay de `See the Future` se le mostraba a los dos jugadores en red, no solo a quien jugó la carta (hallazgo de la verificación de Fase 5); ahora `GameTableView` lo filtra por turno
+
+### Documentación
+- `docs/GAME_RULES.md` sincronizado con `ROADMAP.md` (ya no lista como pendiente la ventana de Nope ni el grace period de reconexión, ambos completos hace tiempo) y actualizado con el estado real del trío de gatos (motor completo, sin UI todavía)
+
+---
+
 ## [0.5.4] — 2026-07-11
 
 ### Agregado
