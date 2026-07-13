@@ -93,7 +93,7 @@ y su estado de implementación en este proyecto.
 |-------|-------------|
 | Sin efecto jugadas solas | ✅ (`isCatCard` sin handler específico) |
 | Par del mismo tipo → robar carta aleatoria de otro jugador | ✅ |
-| Trío del mismo tipo → ver la mano del objetivo y elegir | ⚠️ Motor completo (`PlayCatTrioAction`), pero sin UI que lo dispare — elegir una carta concreta de la mano rival necesita su propio diseño (el actor no puede ver esa mano). No disponible para el jugador todavía |
+| Trío del mismo tipo → robar una carta concreta de la mano del objetivo | ✅ El actor elige a ciegas por posición (`CardChoiceOverlay` con `faceUp: false`), no viendo el contenido real de la mano rival — nunca fue viable la redacción original "ver la mano y elegir" dado que el actor no puede ver esa mano; se resolvió con el mismo mecanismo que Favor (`TurnPhase.awaitingCardChoice` + `ChooseCardAction`, elige el actor en vez del objetivo) |
 | Par/trío se pueden nopear | ✅ |
 
 ---
@@ -111,8 +111,7 @@ y su estado de implementación en este proyecto.
 ## Reglas pendientes de implementar
 
 > Fases 1 a 5 están completas (ver `ROADMAP.md`); lo que queda pendiente de
-> reglas es exclusivamente Fase 6 (expansiones) más el trío de gatos,
-> señalado arriba con ⚠️.
+> reglas es exclusivamente Fase 6 (expansiones).
 
 | Regla | Fase | Notas |
 |-------|------|-------|
