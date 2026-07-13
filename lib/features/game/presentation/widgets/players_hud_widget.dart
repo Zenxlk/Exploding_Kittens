@@ -21,7 +21,7 @@ class PlayersHudWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 92,
+      height: 108,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -57,16 +57,36 @@ class _PlayerBadge extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          SizedBox(
+            height: 16,
+            child: isCurrentTurn
+                ? const Icon(Icons.arrow_drop_down,
+                    size: 20, color: AppColors.warning)
+                : null,
+          ),
           Stack(
             clipBehavior: Clip.none,
             children: [
-              CircleAvatar(
-                radius: 22,
-                backgroundColor:
-                    isCurrentTurn ? AppColors.primary : AppColors.surface,
-                child: Text(
-                  player.name.isNotEmpty ? player.name[0].toUpperCase() : '?',
-                  style: AppTextStyles.title,
+              Container(
+                padding: EdgeInsets.all(isCurrentTurn ? 3 : 0),
+                decoration: isCurrentTurn
+                    ? const BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.fromBorderSide(
+                          BorderSide(color: AppColors.warning, width: 2.5),
+                        ),
+                      )
+                    : null,
+                child: CircleAvatar(
+                  radius: 22,
+                  backgroundColor:
+                      isCurrentTurn ? AppColors.primary : AppColors.surface,
+                  child: Text(
+                    player.name.isNotEmpty
+                        ? player.name[0].toUpperCase()
+                        : '?',
+                    style: AppTextStyles.title,
+                  ),
                 ),
               ),
               if (_isDisconnected)
