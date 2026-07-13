@@ -71,7 +71,7 @@ y su estado de implementación en este proyecto.
 ### Favor
 | Regla | Implementada |
 |-------|-------------|
-| Elige un jugador → ese jugador te da una carta (él elige cuál) | ✅ |
+| Elige un jugador → ese jugador te da una carta (él elige cuál) | ✅ El objetivo elige de verdad vía `CardChoiceOverlay` (`TurnPhase.awaitingCardChoice` + `ChooseCardAction`). Reportado por el usuario que antes el motor robaba una carta al azar sin preguntarle nada al objetivo (`ActionProcessor._stealRandomCard`) — la tabla ya decía "el objetivo elige" pero no era cierto hasta este fix |
 | Requiere objetivo vivo distinto del jugador activo | ✅ |
 | Si el objetivo no tiene cartas, no ocurre nada | ✅ |
 
@@ -127,7 +127,7 @@ y su estado de implementación en este proyecto.
 
 | Aspecto | Juego físico | Esta implementación |
 |---------|-------------|---------------------|
-| Favor — quién elige la carta | El objetivo elige | El objetivo elige, vía `FavorTargetOverlay` |
+| Favor — quién elige la carta | El objetivo elige | El objetivo elige, vía `CardChoiceOverlay` (`FavorTargetOverlay` es del que pide el Favor, para elegir a quién pedírselo — cosas distintas) |
 | Ver el futuro — privacidad | El jugador lo ve en secreto | Filtrado por turno en el cliente; el dato en sí sigue viajando compartido en `GameState` (sin canal privado por jugador todavía) |
 | Inserción de bomba | El jugador físicamente la mete | El jugador elige posición en `InsertBombOverlay` |
 | Reconocimiento de cartas | Visual directo | Requiere trust en modo red (sin verificación criptográfica en MVP) |

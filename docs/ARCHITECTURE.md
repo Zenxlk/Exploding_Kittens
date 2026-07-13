@@ -59,11 +59,12 @@ Exhaustiva: el compilador obliga a manejar todos los casos en `ActionProcessor`.
 |--------|-------------|
 | `DrawCardAction` | Robar la carta de arriba del mazo |
 | `PlayCardAction` | Jugar una carta sin objetivo |
-| `PlayFavorAction` | Pedir carta aleatoria a otro jugador |
+| `PlayFavorAction` | Pedirle una carta a otro jugador (él elige cuál con `ChooseCardAction`, ver abajo) |
 | `PlayCatPairAction` | Par de gatos → robar carta aleatoria |
 | `PlayCatTrioAction` | Trío de gatos → elegir carta de la mano del objetivo |
 | `DefuseBombAction` | Usar Defuse + elegir posición de reinserción |
 | `NopeAction` | Cancelar (o des-cancelar) la acción pendiente |
+| `ChooseCardAction` | Elige una carta concreta para resolver una acción pendiente (`GameState.pendingAction` decide de qué mano sale y quién la recibe). Hoy solo la dispara el objetivo de un Favor; a propósito genérica para reusarse con cualquier otra "elegí una carta concreta" futura, p. ej. el trío de gatos |
 
 ### `GameEvent` — sealed class
 
@@ -91,6 +92,13 @@ TurnPhase.playing        ← TurnManager.advance() rota al siguiente jugador
 
 `TurnPhase` también declara `drawRequired` y `ended`, pero ningún camino del
 motor los asigna hoy — quedaron del diseño inicial sin uso real.
+
+Un Favor sin nopear es la excepción a este diagrama: en vez de resolverse
+solo al cerrar la ventana de Nope, pasa a `TurnPhase.awaitingCardChoice` y
+se queda ahí (sin volver a `playing`, sin limpiar `pendingAction`) hasta que
+el objetivo manda un `ChooseCardAction` con la carta que decide entregar —
+recién ahí vuelve a `playing`. Es el único caso hoy donde quien debe actuar
+a continuación no es `turn.currentPlayerId`.
 
 Attack chain: `TurnModel.actionsLeft > 1` mantiene al mismo jugador.
 Nope chain: `TurnModel.nopeChainCount` impar = acción cancelada.
