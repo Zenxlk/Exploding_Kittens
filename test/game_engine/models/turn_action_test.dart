@@ -60,14 +60,12 @@ void main() {
           CardModel(id: 'tacocat_3', type: CardType.tacocat),
         ],
         targetPlayerId: 'p2',
-        chosenCardId: 'chosen-1',
       );
       final restored = TurnAction.fromJson(action.toJson());
       expect(restored, isA<PlayCatTrioAction>());
       final r = restored as PlayCatTrioAction;
       expect(r.cards, action.cards);
       expect(r.targetPlayerId, 'p2');
-      expect(r.chosenCardId, 'chosen-1');
     });
 
     test('DefuseBombAction round-trip', () {
@@ -91,6 +89,15 @@ void main() {
       final restored = TurnAction.fromJson(action.toJson());
       expect(restored, isA<NopeAction>());
       expect((restored as NopeAction).nopeCard, action.nopeCard);
+    });
+
+    test('ChooseCardAction round-trip', () {
+      const action = ChooseCardAction(playerId: 'p2', cardId: 'card-1');
+      final restored = TurnAction.fromJson(action.toJson());
+      expect(restored, isA<ChooseCardAction>());
+      final r = restored as ChooseCardAction;
+      expect(r.playerId, 'p2');
+      expect(r.cardId, 'card-1');
     });
 
     test('fromJson lanza FormatException con un type desconocido', () {

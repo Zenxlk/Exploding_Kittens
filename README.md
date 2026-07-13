@@ -53,7 +53,7 @@ flutter run
 - **Riverpod 3** — gestión de estado
 - **GoRouter** — navegación declarativa
 - **WebSocket** (`web_socket_channel`) — comunicación en red local y futura online
-- **UDP broadcast** — descubrimiento de salas en la red local (lobby)
+- **mDNS/DNS-SD** (`nsd`) — descubrimiento de salas en la red local (lobby)
 - **Lottie + flutter_animate** — animaciones de cartas
 - **audioplayers** — efectos de sonido
 - **Hive** — persistencia local

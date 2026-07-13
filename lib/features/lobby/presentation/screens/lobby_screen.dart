@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:exploding_kittens/core/audio/menu_music_mixin.dart';
 import 'package:exploding_kittens/core/router/route_names.dart';
 import 'package:exploding_kittens/core/theme/app_colors.dart';
 import 'package:exploding_kittens/core/theme/app_text_styles.dart';
@@ -13,6 +14,7 @@ import 'package:exploding_kittens/features/lobby/domain/models/lobby_player.dart
 import 'package:exploding_kittens/features/lobby/domain/models/lobby_room.dart';
 import 'package:exploding_kittens/features/lobby/domain/models/lobby_status.dart';
 import 'package:exploding_kittens/features/lobby/presentation/providers/lobby_providers.dart';
+import 'package:exploding_kittens/features/settings/presentation/providers/settings_providers.dart';
 
 class LobbyScreen extends ConsumerStatefulWidget {
   const LobbyScreen({super.key, required this.isHost});
@@ -22,7 +24,8 @@ class LobbyScreen extends ConsumerStatefulWidget {
   ConsumerState<LobbyScreen> createState() => _LobbyScreenState();
 }
 
-class _LobbyScreenState extends ConsumerState<LobbyScreen> {
+class _LobbyScreenState extends ConsumerState<LobbyScreen>
+    with MenuMusicMixin<LobbyScreen> {
   @override
   void initState() {
     super.initState();
@@ -37,6 +40,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(settingsProvider, (_, __) => syncMenuMusic());
     ref.listen<LobbyState>(lobbyProvider, (_, next) {
       switch (next) {
         case LobbyInRoom(:final room) when room.status == LobbyStatus.starting:

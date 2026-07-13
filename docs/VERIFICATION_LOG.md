@@ -366,7 +366,7 @@ sesión (misma red virtual `netsimd`, sin necesitar el puente
   navegó correctamente. Commit `fix(features): navigate non-host to
   GameScreen when host starts a rematch`.
 
-### Hallazgo pendiente (no arreglado esta sesión — fuera del alcance de Fase 5)
+### Hallazgo de esta sesión (no arreglado en su momento — luego resuelto)
 
 - **Recrear una sala sin salir de la anterior dentro de la misma sesión de
   app deja un "servidor fantasma"**: tras terminar una partida y tocar
@@ -379,11 +379,12 @@ sesión (misma red virtual `netsimd`, sin necesitar el puente
   para continuar las pruebas force-cerrando ambos procesos y empezando de
   cero (que sí sincronizó correctamente, confirmando que no era un
   problema del protocolo en sí). Es un bug real del ciclo de vida del
-  lobby (Fase 3), no de la sincronización de Fase 5 — candidato para
-  arreglarlo haciendo que las salidas de sala fuera de un flujo explícito
-  (p. ej. "Volver al menú" en `GameOverScreen`) llamen a `leaveRoom()`
-  antes de navegar. No se tocó en esta sesión por estar fuera del alcance
-  específico que se estaba verificando.
+  lobby (Fase 3), no de la sincronización de Fase 5. No se tocó en esta
+  sesión por estar fuera del alcance específico que se estaba
+  verificando. **Arreglado en `dev/gameplay-fixes`**: los dos botones
+  "Volver al menú" en `GameOverScreen` ahora llaman `leaveRoom()` antes de
+  navegar. Commit `fix(features): leave the lobby room before returning
+  to the menu`.
 
 ### Nota de entorno
 
@@ -399,3 +400,72 @@ sesión (misma red virtual `netsimd`, sin necesitar el puente
   por el test de integración real en loopback
   (`test/network/websocket/ws_server_client_test.dart`), no dependiente de
   las particularidades de red de un emulador.
+
+---
+
+## Fase 6 — Migración a mDNS real con `nsd` (pendiente de verificar)
+
+Rama `dev/fase6-tech-improvements`. `MdnsAdvertiser`/`MdnsDiscoverer` pasaron
+de un broadcast UDP propio (`255.255.255.255`) a mDNS/DNS-SD real vía el
+paquete `nsd` (Bonjour en Apple, NsdManager en Android). Es código nativo sin
+implementación en Dart puro — no se pudo ejercitar el registro/descubrimiento
+real desde el entorno de desarrollo (solo se mockeó `NsdPlatformInterface`
+para testear la lógica propia). Falta esta verificación antes de mergear.
+
+**Diferencia clave a tener en cuenta**: la sesión de Fase 5 confirmó que el
+UDP *broadcast* viajaba solo entre emuladores sin ningún truco de red. El
+*multicast* real que usa mDNS (224.0.0.251:5353) es un mecanismo distinto —
+no hay garantía de que se comporte igual en la red virtual de los
+emuladores. Si el descubrimiento no aparece solo, puede ser justamente eso
+lo que hay que reportar (no asumir que es un bug de la app sin antes probar
+con dispositivos físicos reales en la misma WiFi, donde el multicast real
+sí debería andar).
+
+```bash
+# 0. Pararse en la rama a probar
+git fetch origin
+git checkout dev/fase6-tech-improvements
+git pull
+
+# 1. Ver qué dispositivos/emuladores hay disponibles
+flutter devices
+
+# 2. Lanzar la app en cada uno, uno detrás del otro (no en paralelo)
+flutter run -d <serial-emulador-1> --no-hot   # será el host
+flutter run -d <serial-emulador-2> --no-hot   # se unirá a la sala
+
+# 3. Emulador 1 → Home → "Crear sala"
+# 4. Emulador 2 → Home → "Unirse a sala"
+#    → si nsd/mDNS funciona igual que el UDP broadcast anterior, la sala
+#      del emulador 1 debería aparecer sola en la lista, sin IP manual.
+#      Si NO aparece tras unos segundos, es la señal a reportar.
+# 5. Si aparece: unirse, tocar "Ready", y desde el emulador 1 (host)
+#    tocar "Start Game" — de ahí en más el resto del flujo (turnos,
+#    cartas, Nope, Defuse, GameOverScreen) ya está verificado desde
+#    Fase 5 y no debería tener sorpresas, solo confirma que no rompió nada.
+```
+
+Capturar pantalla de cualquiera de los dos en cualquier momento:
+
+```bash
+ADB=/home/user/Android/Sdk/platform-tools/adb   # ajustar a tu ruta real
+$ADB -s <serial> exec-out screencap -p > captura.png
+```
+
+Si algo queda colgado o hay que repetir desde cero:
+
+```bash
+pkill -f "flutter_tools.snapshot run"
+adb -s <serial> forward --remove-all
+adb -s <serial> shell am force-stop com.zenxlk.exploding_kittens
+```
+
+**Qué reportar de vuelta, en cualquier resultado:**
+- Si la sala aparece sola → confirma que la migración funciona igual o
+  mejor que el UDP broadcast anterior. Se puede mergear tal cual.
+- Si no aparece → indicar si se probó también con `am force-stop` +
+  reintentar, y si hay algo relevante en `flutter run`'s logs de la consola
+  de discovery (`MdnsDiscoverer`/`nsd` no deberían tirar excepciones, solo
+  no encontrar nada).
+- Si hay dispositivos físicos reales en la misma WiFi a mano, son una
+  prueba más representativa que 2 emuladores para multicast real.

@@ -421,24 +421,20 @@ void main() {
       );
 
       test(
-        'playCatTrio aplica PlayCatTrioAction con cartas, objetivo y carta '
-        'elegida',
+        'playCatTrio aplica PlayCatTrioAction con cartas y objetivo',
         () {
           const cards = [
             CardModel(id: 'a', type: CardType.tacocat),
             CardModel(id: 'b', type: CardType.tacocat),
             CardModel(id: 'c', type: CardType.tacocat),
           ];
-          container
-              .read(gameProvider.notifier)
-              .playCatTrio('p1', cards, 'p2', 'chosen-1');
+          container.read(gameProvider.notifier).playCatTrio('p1', cards, 'p2');
 
           expect(captured, isA<PlayCatTrioAction>());
           final action = captured as PlayCatTrioAction;
           expect(action.playerId, 'p1');
           expect(action.cards, cards);
           expect(action.targetPlayerId, 'p2');
-          expect(action.chosenCardId, 'chosen-1');
         },
       );
 
@@ -465,6 +461,16 @@ void main() {
           expect(action.insertAtPosition, 3);
         },
       );
+
+      test('chooseCard aplica ChooseCardAction con el id de la carta elegida',
+          () {
+        container.read(gameProvider.notifier).chooseCard('p2', 'card-1');
+
+        expect(captured, isA<ChooseCardAction>());
+        final action = captured as ChooseCardAction;
+        expect(action.playerId, 'p2');
+        expect(action.cardId, 'card-1');
+      });
     });
   });
 }

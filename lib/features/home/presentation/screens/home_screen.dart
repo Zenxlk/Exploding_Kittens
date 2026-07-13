@@ -1,17 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../../core/audio/menu_music_mixin.dart';
 import '../../../../../core/constants/app_constants.dart';
 import '../../../../../core/router/route_names.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_text_styles.dart';
+import '../../../settings/presentation/providers/settings_providers.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with MenuMusicMixin<HomeScreen> {
+  @override
   Widget build(BuildContext context) {
+    ref.listen(settingsProvider, (_, __) => syncMenuMusic());
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(

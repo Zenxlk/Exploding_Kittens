@@ -71,7 +71,7 @@ y su estado de implementación en este proyecto.
 ### Favor
 | Regla | Implementada |
 |-------|-------------|
-| Elige un jugador → ese jugador te da una carta (él elige cuál) | ✅ |
+| Elige un jugador → ese jugador te da una carta (él elige cuál) | ✅ El objetivo elige de verdad vía `CardChoiceOverlay` (`TurnPhase.awaitingCardChoice` + `ChooseCardAction`). Reportado por el usuario que antes el motor robaba una carta al azar sin preguntarle nada al objetivo (`ActionProcessor._stealRandomCard`) — la tabla ya decía "el objetivo elige" pero no era cierto hasta este fix |
 | Requiere objetivo vivo distinto del jugador activo | ✅ |
 | Si el objetivo no tiene cartas, no ocurre nada | ✅ |
 
@@ -93,7 +93,7 @@ y su estado de implementación en este proyecto.
 |-------|-------------|
 | Sin efecto jugadas solas | ✅ (`isCatCard` sin handler específico) |
 | Par del mismo tipo → robar carta aleatoria de otro jugador | ✅ |
-| Trío del mismo tipo → ver la mano del objetivo y elegir | ⚠️ Motor completo (`PlayCatTrioAction`), pero sin UI que lo dispare — elegir una carta concreta de la mano rival necesita su propio diseño (el actor no puede ver esa mano). No disponible para el jugador todavía |
+| Trío del mismo tipo → robar una carta concreta de la mano del objetivo | ✅ El actor elige a ciegas por posición (`CardChoiceOverlay` con `faceUp: false`), no viendo el contenido real de la mano rival — nunca fue viable la redacción original "ver la mano y elegir" dado que el actor no puede ver esa mano; se resolvió con el mismo mecanismo que Favor (`TurnPhase.awaitingCardChoice` + `ChooseCardAction`, elige el actor en vez del objetivo) |
 | Par/trío se pueden nopear | ✅ |
 
 ---
@@ -111,8 +111,7 @@ y su estado de implementación en este proyecto.
 ## Reglas pendientes de implementar
 
 > Fases 1 a 5 están completas (ver `ROADMAP.md`); lo que queda pendiente de
-> reglas es exclusivamente Fase 6 (expansiones) más el trío de gatos,
-> señalado arriba con ⚠️.
+> reglas es exclusivamente Fase 6 (expansiones).
 
 | Regla | Fase | Notas |
 |-------|------|-------|
@@ -127,7 +126,7 @@ y su estado de implementación en este proyecto.
 
 | Aspecto | Juego físico | Esta implementación |
 |---------|-------------|---------------------|
-| Favor — quién elige la carta | El objetivo elige | El objetivo elige, vía `FavorTargetOverlay` |
+| Favor — quién elige la carta | El objetivo elige | El objetivo elige, vía `CardChoiceOverlay` (`FavorTargetOverlay` es del que pide el Favor, para elegir a quién pedírselo — cosas distintas) |
 | Ver el futuro — privacidad | El jugador lo ve en secreto | Filtrado por turno en el cliente; el dato en sí sigue viajando compartido en `GameState` (sin canal privado por jugador todavía) |
 | Inserción de bomba | El jugador físicamente la mete | El jugador elige posición en `InsertBombOverlay` |
 | Reconocimiento de cartas | Visual directo | Requiere trust en modo red (sin verificación criptográfica en MVP) |

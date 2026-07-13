@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:network_info_plus/network_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:exploding_kittens/features/lobby/data/lobby_repository.dart';
@@ -53,10 +54,21 @@ class LobbyError extends LobbyState {
 
 // ── Utility providers ─────────────────────────────────────────────────────────
 
-// One UUID per app session — used as the local player's network identity.
-// TODO(improvement): persist with shared_preferences so the player keeps the
-// same id after a crash and can reconnect (Phase 5 reconnection).
-final playerIdProvider = Provider<String>((ref) => const Uuid().v4());
+// Identidad de red del jugador local. Se persiste para que sobreviva a un
+// reinicio/crash de la app — sin esto, reconectar tras un crash (grace
+// period de Fase 5) siempre parecería un jugador nuevo entrando, ya que el
+// host empareja las reconexiones por playerId.
+const _playerIdPrefsKey = 'lobby_player_id';
+
+final playerIdProvider = FutureProvider<String>((ref) async {
+  final prefs = await SharedPreferences.getInstance();
+  final existing = prefs.getString(_playerIdPrefsKey);
+  if (existing != null) return existing;
+
+  final generated = const Uuid().v4();
+  await prefs.setString(_playerIdPrefsKey, generated);
+  return generated;
+});
 
 // Current WiFi IP — shown to the host so others can join manually.
 final wifiIpProvider = FutureProvider<String?>(
@@ -91,7 +103,7 @@ class LobbyNotifier extends Notifier<LobbyState> {
 
   Future<void> createRoom() async {
     final settings = await ref.read(settingsProvider.future);
-    final playerId = ref.read(playerIdProvider);
+    final playerId = await ref.read(playerIdProvider.future);
     _localPlayerId = playerId;
 
     state = const LobbyConnecting();
@@ -124,7 +136,7 @@ class LobbyNotifier extends Notifier<LobbyState> {
 
   Future<void> joinRoom(String hostAddress) async {
     final settings = await ref.read(settingsProvider.future);
-    final playerId = ref.read(playerIdProvider);
+    final playerId = await ref.read(playerIdProvider.future);
     _localPlayerId = playerId;
 
     await _discoverySub?.cancel();

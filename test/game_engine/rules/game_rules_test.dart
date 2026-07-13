@@ -14,6 +14,7 @@ GameState _state({
   required List<PlayerModel> players,
   TurnPhase phase = TurnPhase.playing,
   CardModel? pendingBomb,
+  Object? pendingAction,
   String currentPlayerId = 'p1',
 }) {
   return GameState(
@@ -24,6 +25,7 @@ GameState _state({
     turn: TurnModel(currentPlayerId: currentPlayerId, phase: phase),
     phase: GamePhase.playing,
     pendingBomb: pendingBomb,
+    pendingAction: pendingAction,
   );
 }
 
@@ -154,6 +156,149 @@ void main() {
             insertAtPosition: 0,
           ),
           state,
+        ),
+        throwsA(isA<InvalidActionException>()),
+      );
+    });
+  });
+
+  group('GameRules.validate — ChooseCardAction (respuesta de Favor)', () {
+    const favorCard = CardModel(id: 'favor-1', type: CardType.favor);
+    const givenCard = CardModel(id: 'given-1', type: CardType.skip);
+
+    GameState awaitingChoiceState() => _state(
+          players: [
+            const PlayerModel(id: 'p1', name: 'A', hand: []),
+            PlayerModel(id: 'p2', name: 'B', hand: const [givenCard]),
+          ],
+          phase: TurnPhase.awaitingCardChoice,
+          pendingAction: const PlayFavorAction(
+            playerId: 'p1',
+            card: favorCard,
+            targetPlayerId: 'p2',
+          ),
+        );
+
+    test(
+        'es válido si lo elige el objetivo del Favor pendiente y tiene la '
+        'carta', () {
+      expect(
+        () => GameRules.validate(
+          const ChooseCardAction(playerId: 'p2', cardId: 'given-1'),
+          awaitingChoiceState(),
+        ),
+        returnsNormally,
+      );
+    });
+
+    test('se rechaza si lo intenta elegir alguien que no es el objetivo', () {
+      expect(
+        () => GameRules.validate(
+          const ChooseCardAction(playerId: 'p1', cardId: 'given-1'),
+          awaitingChoiceState(),
+        ),
+        throwsA(isA<InvalidActionException>()),
+      );
+    });
+
+    test('se rechaza si la carta no está en la mano del objetivo', () {
+      expect(
+        () => GameRules.validate(
+          const ChooseCardAction(playerId: 'p2', cardId: 'no-existe'),
+          awaitingChoiceState(),
+        ),
+        throwsA(isA<InvalidActionException>()),
+      );
+    });
+
+    test('se rechaza fuera de TurnPhase.awaitingCardChoice', () {
+      final state = _state(
+        players: [
+          const PlayerModel(id: 'p1', name: 'A', hand: []),
+          PlayerModel(id: 'p2', name: 'B', hand: const [givenCard]),
+        ],
+        phase: TurnPhase.playing,
+        pendingAction: const PlayFavorAction(
+          playerId: 'p1',
+          card: favorCard,
+          targetPlayerId: 'p2',
+        ),
+      );
+      expect(
+        () => GameRules.validate(
+          const ChooseCardAction(playerId: 'p2', cardId: 'given-1'),
+          state,
+        ),
+        throwsA(isA<InvalidActionException>()),
+      );
+    });
+
+    test('se rechaza si no hay ninguna elección pendiente', () {
+      final state = _state(
+        players: [
+          const PlayerModel(id: 'p1', name: 'A', hand: []),
+          PlayerModel(id: 'p2', name: 'B', hand: const [givenCard]),
+        ],
+        phase: TurnPhase.awaitingCardChoice,
+      );
+      expect(
+        () => GameRules.validate(
+          const ChooseCardAction(playerId: 'p2', cardId: 'given-1'),
+          state,
+        ),
+        throwsA(isA<InvalidActionException>()),
+      );
+    });
+  });
+
+  group('GameRules.validate — ChooseCardAction (trío de gatos)', () {
+    const trioCards = [
+      CardModel(id: 't1', type: CardType.tacocat),
+      CardModel(id: 't2', type: CardType.tacocat),
+      CardModel(id: 't3', type: CardType.tacocat),
+    ];
+    const rivalCard = CardModel(id: 'rival-1', type: CardType.skip);
+
+    GameState awaitingTrioChoiceState() => _state(
+          players: [
+            const PlayerModel(id: 'p1', name: 'A', hand: []),
+            PlayerModel(id: 'p2', name: 'B', hand: const [rivalCard]),
+          ],
+          phase: TurnPhase.awaitingCardChoice,
+          pendingAction: const PlayCatTrioAction(
+            playerId: 'p1',
+            cards: trioCards,
+            targetPlayerId: 'p2',
+          ),
+        );
+
+    test(
+        'es válido si lo elige el actor del trío pendiente y la carta está '
+        'en la mano del objetivo', () {
+      expect(
+        () => GameRules.validate(
+          const ChooseCardAction(playerId: 'p1', cardId: 'rival-1'),
+          awaitingTrioChoiceState(),
+        ),
+        returnsNormally,
+      );
+    });
+
+    test('se rechaza si lo intenta elegir alguien que no es el actor', () {
+      expect(
+        () => GameRules.validate(
+          const ChooseCardAction(playerId: 'p2', cardId: 'rival-1'),
+          awaitingTrioChoiceState(),
+        ),
+        throwsA(isA<InvalidActionException>()),
+      );
+    });
+
+    test('se rechaza si la carta no está en la mano del objetivo', () {
+      expect(
+        () => GameRules.validate(
+          const ChooseCardAction(playerId: 'p1', cardId: 'no-existe'),
+          awaitingTrioChoiceState(),
         ),
         throwsA(isA<InvalidActionException>()),
       );

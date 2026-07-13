@@ -6,6 +6,13 @@ enum TurnPhase {
   drawRequired, // el jugador debe robar para terminar turno
   resolving, // se está aplicando el efecto de una carta
   ended, // turno terminado, pasa al siguiente
+  // Alguien (no necesariamente el jugador activo) debe elegir una carta
+  // concreta para resolver una acción pendiente — ver GameState.pendingAction
+  // y ChooseCardAction. Hoy solo la usa Favor (el objetivo elige qué carta
+  // de su propia mano entregar); pensada para reusarse con cualquier otra
+  // "elegí una carta concreta" futura (p. ej. el trío de gatos, donde en
+  // cambio elegiría el actor desde la mano del rival).
+  awaitingCardChoice,
 }
 
 class TurnModel extends Equatable {

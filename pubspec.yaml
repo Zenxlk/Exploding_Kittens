@@ -1,7 +1,7 @@
 name: exploding_kittens
 description: "Exploding Kittens — Mobile game by ZenXLK"
 publish_to: 'none'
-version: 0.5.6+34
+version: 0.5.15+43
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
@@ -45,6 +45,8 @@ dependencies:
   gap: ^3.0.1
 
   cupertino_icons: ^1.0.8
+  nsd: ^5.0.1
+  package_info_plus: ^10.2.0
 
 dev_dependencies:
   flutter_test:
@@ -60,6 +62,7 @@ dev_dependencies:
 
   # Testing
   mocktail: ^1.0.4
+  nsd_platform_interface: ^2.2.0
 
   flutter_lints: ^6.0.0
 

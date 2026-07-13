@@ -5,10 +5,8 @@ abstract final class AppConstants {
   // WebSocket port for local WiFi games
   static const int localGamePort = 8765;
 
-  // UDP broadcast port used by MdnsAdvertiser / MdnsDiscoverer
-  static const int discoveryPort = 8766;
-
-  // mDNS service type — used for future proper mDNS registration
+  // mDNS/DNS-SD service type registered/discovered by MdnsAdvertiser /
+  // MdnsDiscoverer (via the nsd package)
   static const String mdnsServiceType = '_explkittens._tcp';
 
   static const Duration splashDuration = Duration(seconds: 2);

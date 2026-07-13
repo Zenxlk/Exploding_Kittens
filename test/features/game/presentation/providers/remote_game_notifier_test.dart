@@ -175,11 +175,11 @@ void main() {
         ];
         container
             .read(remoteGameProvider.notifier)
-            .playCatTrio('p1', cards, 'p2', 'chosen-1');
+            .playCatTrio('p1', cards, 'p2');
 
         final action = lastSentAction() as PlayCatTrioAction;
         expect(action.cards, cards);
-        expect(action.chosenCardId, 'chosen-1');
+        expect(action.targetPlayerId, 'p2');
       });
 
       test('playNope manda NopeAction', () {
@@ -197,6 +197,14 @@ void main() {
         final action = lastSentAction() as DefuseBombAction;
         expect(action.defuseCard, card);
         expect(action.insertAtPosition, 3);
+      });
+
+      test('chooseCard manda ChooseCardAction', () {
+        container.read(remoteGameProvider.notifier).chooseCard('p2', 'card-1');
+
+        final action = lastSentAction() as ChooseCardAction;
+        expect(action.playerId, 'p2');
+        expect(action.cardId, 'card-1');
       });
     });
   });

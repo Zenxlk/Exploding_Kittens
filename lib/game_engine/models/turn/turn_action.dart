@@ -29,6 +29,7 @@ sealed class TurnAction extends Equatable {
       'play_cat_trio' => PlayCatTrioAction._fromJson(j),
       'defuse_bomb' => DefuseBombAction._fromJson(j),
       'nope' => NopeAction._fromJson(j),
+      'choose_card' => ChooseCardAction._fromJson(j),
       final t => throw FormatException('Unknown TurnAction type: $t'),
     };
   }
@@ -128,17 +129,21 @@ final class PlayCatPairAction extends TurnAction {
   List<Object?> get props => [playerId, cards, targetPlayerId];
 }
 
-/// Jugar trío de gatos para ver la mano de otro y elegir
+/// Jugar trío de gatos para robar una carta concreta de la mano del objetivo.
+/// A diferencia de antes, ya NO lleva `chosenCardId`: el actor no puede ver
+/// la mano rival al jugar el trío, así que no hay forma de elegir en este
+/// mismo paso. La elección real llega después, con un `ChooseCardAction` del
+/// actor una vez que la ventana de Nope se cierra (ver
+/// `ActionProcessor.resolveNopeWindow`), a ciegas por posición — igual que
+/// Favor, pero eligiendo el actor en vez del objetivo.
 final class PlayCatTrioAction extends TurnAction {
   const PlayCatTrioAction({
     required super.playerId,
     required this.cards, // exactamente 3 cartas del mismo tipo gato
     required this.targetPlayerId,
-    required this.chosenCardId,
   });
   final List<CardModel> cards;
   final String targetPlayerId;
-  final String chosenCardId;
 
   factory PlayCatTrioAction._fromJson(Map<String, dynamic> j) =>
       PlayCatTrioAction(
@@ -147,7 +152,6 @@ final class PlayCatTrioAction extends TurnAction {
             .map((c) => CardModel.fromJson(c as Map<String, dynamic>))
             .toList(),
         targetPlayerId: j['targetPlayerId'] as String,
-        chosenCardId: j['chosenCardId'] as String,
       );
 
   @override
@@ -156,11 +160,10 @@ final class PlayCatTrioAction extends TurnAction {
         'playerId': playerId,
         'cards': cards.map((c) => c.toJson()).toList(),
         'targetPlayerId': targetPlayerId,
-        'chosenCardId': chosenCardId,
       };
 
   @override
-  List<Object?> get props => [playerId, cards, targetPlayerId, chosenCardId];
+  List<Object?> get props => [playerId, cards, targetPlayerId];
 }
 
 /// Usar Defuse cuando se roba un Exploding Kitten
@@ -190,6 +193,34 @@ final class DefuseBombAction extends TurnAction {
 
   @override
   List<Object?> get props => [playerId, defuseCard, insertAtPosition];
+}
+
+/// Elige una carta concreta para resolver una acción pendiente —
+/// `GameState.pendingAction` decide de qué mano sale y quién la recibe (ver
+/// `ActionProcessor._processChooseCard`). Hoy solo la dispara el objetivo de
+/// un Favor (elige qué carta de su propia mano entrega); [playerId] es quien
+/// elige, no necesariamente el jugador activo del turno — a propósito
+/// genérica para poder reusarse con otra "elegí una carta concreta" futura
+/// (p. ej. el trío de gatos, donde en cambio elegiría el actor).
+final class ChooseCardAction extends TurnAction {
+  const ChooseCardAction({
+    required super.playerId,
+    required this.cardId,
+  });
+  final String cardId;
+
+  factory ChooseCardAction._fromJson(Map<String, dynamic> j) =>
+      ChooseCardAction(
+        playerId: j['playerId'] as String,
+        cardId: j['cardId'] as String,
+      );
+
+  @override
+  Map<String, dynamic> toJson() =>
+      {'type': 'choose_card', 'playerId': playerId, 'cardId': cardId};
+
+  @override
+  List<Object?> get props => [playerId, cardId];
 }
 
 /// Jugar Nope sobre la acción anterior en cadena

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
+import '../../../../core/audio/menu_music_mixin.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../providers/settings_providers.dart';
@@ -12,7 +13,8 @@ class SettingsScreen extends ConsumerStatefulWidget {
   ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+class _SettingsScreenState extends ConsumerState<SettingsScreen>
+    with MenuMusicMixin<SettingsScreen> {
   late final TextEditingController _nameController;
   bool _nameInitialized = false;
 
@@ -30,6 +32,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(settingsProvider, (_, __) => syncMenuMusic());
     final asyncSettings = ref.watch(settingsProvider);
 
     return Scaffold(
@@ -152,13 +155,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               _SettingsTile(
                 title: 'Versión',
                 icon: Icons.info_outline_rounded,
-                // Hardcodeado a propósito (sin package_info_plus todavía):
-                // mantener sincronizado a mano con pubspec.yaml en cada
-                // commit chore(version).
-                trailing: Text('0.5.6',
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppColors.onBackground.withValues(alpha: 0.5),
-                    )),
+                trailing: Text(
+                  ref.watch(appVersionProvider).value ?? '',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.onBackground.withValues(alpha: 0.5),
+                  ),
+                ),
               ),
 
               _SettingsTile(

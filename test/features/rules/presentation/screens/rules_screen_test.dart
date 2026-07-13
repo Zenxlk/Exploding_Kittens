@@ -79,21 +79,14 @@ void main() {
     });
 
     testWidgets(
-      'aclara que el trío de gatos todavía no está disponible en esta '
-      'versión',
+      'explica que el trío de gatos se elige a ciegas de la mano rival',
       (tester) async {
         _growViewport(tester);
         await tester.pumpWidget(_wrap());
         await tester.pumpAndSettle();
 
-        expect(
-          find.textContaining('trío'),
-          findsOneWidget,
-        );
-        expect(
-          find.textContaining('todavía no está disponible'),
-          findsOneWidget,
-        );
+        expect(find.textContaining('3 iguales'), findsOneWidget);
+        expect(find.textContaining('a ciegas'), findsOneWidget);
       },
     );
 

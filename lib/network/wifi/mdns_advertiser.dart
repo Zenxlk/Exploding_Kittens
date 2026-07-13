@@ -1,102 +1,91 @@
-import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
+import 'dart:typed_data';
 
-import 'package:network_info_plus/network_info_plus.dart';
+import 'package:nsd/nsd.dart';
 
 import 'package:exploding_kittens/core/constants/app_constants.dart';
-import 'package:exploding_kittens/core/errors/failures.dart';
 
-import 'package:exploding_kittens/features/lobby/domain/models/discovered_room.dart';
-
-// Announces a room on the local network via UDP broadcast.
+// Anuncia una sala en la red local vía mDNS/DNS-SD real (Bonjour en
+// Apple, NsdManager en Android), usando el paquete `nsd`.
 //
-// Every [interval] a JSON beacon is sent to 255.255.255.255:[discoveryPort]
-// so that MdnsDiscoverer instances on the same subnet can find it.
-//
-// TODO(improvement): replace with the `nsd` package (pub.dev/packages/nsd)
-// for proper mDNS / DNS-SD registration that shows up in system service
-// browsers and works with Apple Bonjour.
-//
-// TODO(improvement): on Android 10+ receiving UDP broadcast requires
-// acquiring a WifiManager.MulticastLock via a platform channel. Add this
-// before shipping to the Play Store.
+// NO VERIFICADO EN UN DISPOSITIVO REAL TODAVÍA. El paquete `nsd` es
+// enteramente nativo (sin implementación en Dart puro), así que no hay
+// forma de ejercitarlo end-to-end desde este entorno de desarrollo — los
+// tests de esta clase mockean NsdPlatformInterface para probar la lógica
+// propia (mapeo de campos, ciclo de vida), no el registro/descubrimiento
+// mDNS real. Antes de confiar en esto hace falta la misma verificación
+// manual en dispositivo que se hizo para Fase 5 (ver docs/VERIFICATION_LOG.md).
 class MdnsAdvertiser {
-  RawDatagramSocket? _socket;
-  Timer? _timer;
-  bool get isRunning => _socket != null;
+  Registration? _registration;
+  bool get isRunning => _registration != null;
 
-  // Starts broadcasting the room beacon. Throws [NetworkFailure] if the
-  // device is not connected to a WiFi network.
   Future<void> start({
     required String roomId,
     required String hostName,
     required int playerCount,
     required int maxPlayers,
     int port = AppConstants.localGamePort,
-    Duration interval = const Duration(seconds: 3),
   }) async {
-    final ip = await NetworkInfo().getWifiIP();
-    if (ip == null) {
-      throw const NetworkFailure('Could not determine WiFi IP address');
-    }
-
-    _socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
-    _socket!.broadcastEnabled = true;
-
-    final room = DiscoveredRoom(
-      roomId: roomId,
-      hostName: hostName,
-      hostAddress: ip,
-      port: port,
-      playerCount: playerCount,
-      maxPlayers: maxPlayers,
+    _registration = await register(
+      Service(
+        name: roomId,
+        type: AppConstants.mdnsServiceType,
+        port: port,
+        txt: _txtFor(
+          hostName: hostName,
+          playerCount: playerCount,
+          maxPlayers: maxPlayers,
+        ),
+      ),
     );
-
-    _sendBeacon(room);
-    _timer = Timer.periodic(interval, (_) => _sendBeacon(room));
   }
 
-  // Call this whenever the player count changes so listeners see fresh data.
-  // TODO(improvement): accept a full DiscoveredRoom instead of rebuilding
-  // it here — avoids duplicating the roomId/hostName state in the caller.
+  // El paquete `nsd` no permite actualizar los TXT records de un registro
+  // ya activo — hay que des-registrar y volver a registrar. Es más costoso
+  // que simplemente mandar otro beacon UDP (como hacía la versión anterior
+  // basada en broadcast), pero en la práctica sigue siendo rápido: roomId
+  // no cambia entre llamadas, así que no hay colisión de nombre que el
+  // lado nativo tenga que resolver con reintentos.
   Future<void> updatePlayerCount({
-    required String roomId,
-    required String hostName,
     required int playerCount,
     required int maxPlayers,
-    int port = AppConstants.localGamePort,
   }) async {
-    final ip = await NetworkInfo().getWifiIP();
-    if (ip == null || _socket == null) return;
+    final current = _registration;
+    if (current == null) return;
 
-    final room = DiscoveredRoom(
-      roomId: roomId,
-      hostName: hostName,
-      hostAddress: ip,
-      port: port,
-      playerCount: playerCount,
-      maxPlayers: maxPlayers,
+    final hostName = _decodeTxt(current.service.txt?['hostName']) ?? '';
+    await unregister(current);
+    _registration = await register(
+      Service(
+        name: current.service.name,
+        type: current.service.type,
+        port: current.service.port,
+        txt: _txtFor(
+          hostName: hostName,
+          playerCount: playerCount,
+          maxPlayers: maxPlayers,
+        ),
+      ),
     );
-    _sendBeacon(room);
-  }
-
-  void _sendBeacon(DiscoveredRoom room) {
-    if (_socket == null) return;
-    try {
-      final payload = utf8.encode(jsonEncode(room.toJson()));
-      _socket!.send(
-        payload,
-        InternetAddress('255.255.255.255'),
-        AppConstants.discoveryPort,
-      );
-    } catch (_) {}
   }
 
   void stop() {
-    _timer?.cancel();
-    _socket?.close();
-    _timer = null;
-    _socket = null;
+    final current = _registration;
+    _registration = null;
+    if (current != null) unregister(current);
   }
+
+  static Map<String, Uint8List> _txtFor({
+    required String hostName,
+    required int playerCount,
+    required int maxPlayers,
+  }) =>
+      {
+        'hostName': Uint8List.fromList(utf8.encode(hostName)),
+        'playerCount': Uint8List.fromList(utf8.encode('$playerCount')),
+        'maxPlayers': Uint8List.fromList(utf8.encode('$maxPlayers')),
+      };
+
+  static String? _decodeTxt(Uint8List? bytes) =>
+      bytes == null ? null : utf8.decode(bytes);
 }

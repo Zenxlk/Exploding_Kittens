@@ -163,6 +163,13 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 : ref
                     .read(remoteGameProvider.notifier)
                     .playCatPair(localPlayerId, cards, targetId),
+            onPlayCatTrio: (cards, targetId) => isHost
+                ? ref
+                    .read(gameProvider.notifier)
+                    .playCatTrio(localPlayerId, cards, targetId)
+                : ref
+                    .read(remoteGameProvider.notifier)
+                    .playCatTrio(localPlayerId, cards, targetId),
             onPlayNope: (card) => isHost
                 ? ref.read(gameProvider.notifier).playNope(localPlayerId, card)
                 : ref
@@ -175,6 +182,13 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 : ref
                     .read(remoteGameProvider.notifier)
                     .defuse(localPlayerId, card, position),
+            onChooseCard: (cardId) => isHost
+                ? ref
+                    .read(gameProvider.notifier)
+                    .chooseCard(localPlayerId, cardId)
+                : ref
+                    .read(remoteGameProvider.notifier)
+                    .chooseCard(localPlayerId, cardId),
             assetPathFor: resolver?.faceAssetFor,
             cardBackAssetPath: resolver?.cardBackAsset(),
           ),

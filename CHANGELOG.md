@@ -11,6 +11,83 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.5.15] — 2026-07-13
+
+### Añadido
+- Reportado por el usuario: no quedaba claro en la HUD de jugadores quién tiene el turno. `PlayersHudWidget` ahora resalta al jugador activo con un anillo de color y una flecha indicadora sobre su avatar, además del cambio de color de fondo que ya existía
+
+---
+
+## [0.5.14] — 2026-07-13
+
+### Añadido
+- Trío de gatos jugable: el actor elige a ciegas (boca abajo, sin ver el tipo) una carta de la mano del objetivo, con el mismo mecanismo que se acababa de construir para Favor (`TurnPhase.awaitingCardChoice` + `ChooseCardAction`, pero eligiendo el actor en vez del objetivo). Estaba diferido desde Fase 4 porque el diseño anterior (`PlayCatTrioAction.chosenCardId` fijado al jugar la carta) nunca fue viable: el actor no puede ver la mano rival antes de jugar
+
+---
+
+## [0.5.13] — 2026-07-13
+
+### Corregido
+- Reportado por el usuario: tras jugar Favor, nunca aparecía nada para que el objetivo eligiera qué carta entregar. `ActionProcessor` robaba una carta al azar (`_stealRandomCard`), igual que un par de gatos, aunque `docs/GAME_RULES.md` ya documentaba (incorrectamente) que el objetivo elegía. Ahora una nueva fase `TurnPhase.awaitingCardChoice` + `ChooseCardAction` (genérica a propósito, no específica de Favor) espera la elección real del objetivo antes de resolver
+
+### Añadido
+- `SettingsScreen` ahora lee la versión real del build con `package_info_plus` (`appVersionProvider`) en vez de un string hardcodeado que había que actualizar a mano en cada commit `chore(version)` — este es el último bump que lo necesitó
+
+### Limpieza
+- Eliminado `AppConstants.discoveryPort`, sin uso desde la migración a mDNS real de la versión anterior
+
+---
+
+## [0.5.11] — 2026-07-13
+
+### Añadido — Fase 6: mDNS real
+- `MdnsAdvertiser`/`MdnsDiscoverer` migrados de un broadcast UDP propio a mDNS/DNS-SD real vía el paquete `nsd` (Bonjour en Apple, NsdManager en Android). De paso resuelve el `WifiManager.MulticastLock` de Android 10+ (lo maneja `nsd_android` internamente) y vuelve moot la validación de `hostAddress` contra spoofing (la dirección ahora la resuelve el propio protocolo mDNS, no un campo autoreportado)
+- **Sin verificar en un dispositivo real** — `nsd` es enteramente nativo; los tests mockean `NsdPlatformInterface` y solo cubren la lógica propia. `flutter build apk --debug` compila bien, pero eso no prueba que el descubrimiento funcione en la práctica. Ver la nota en ROADMAP.md
+
+---
+
+## [0.5.10] — 2026-07-13
+
+### Corregido
+- `MdnsDiscoverer` confiaba en el `hostAddress` autoreportado de un beacon; ahora siempre usa la IP de origen observada por el socket, cerrando el caso de un beacon con una IP mentirosa o mal configurada
+
+### Refactor
+- `LobbyRepository` mezclaba estado de host (`_advertiser`, `_playerCountSub`) y de cliente (`_discoverer`) como campos planos en la misma clase. Se extrajeron `HostBeaconSync`/`ClientRoomDiscovery`; sin cambios en `ILobbyRepository` ni en ningún consumidor
+
+---
+
+## [0.5.9] — 2026-07-11
+
+### Corregido
+- `MdnsAdvertiser` volvía a anunciar el `playerCount` original de la sala cada `interval` (~3s), pisando cualquier `updatePlayerCount()` posterior — el `Timer.periodic` capturaba una única foto del estado en vez de leerlo actualizado en cada tick. De paso, `updatePlayerCount` ya no repite `roomId`/`hostName` (cierra el TODO correspondiente)
+
+### Documentación
+- `docs/ARCHITECTURE.md` seguía describiendo Fase 5 (red/reconexión) como pendiente pese a estar completa hace tiempo, con un diagrama de fases de turno que mostraba transiciones que el motor nunca ejecuta (`drawRequired`/`ended`) y un ejemplo de Riverpod con codegen que no coincide con el patrón manual real del proyecto — todo corregido
+- `docs/VERIFICATION_LOG.md` y `ROADMAP.md` actualizados: el bug del "servidor fantasma" y la música de menú ya no figuran como pendientes, ambos se resolvieron en commits anteriores de esta rama
+
+---
+
+## [0.5.8] — 2026-07-11
+
+### Corregido
+- Reportado por el usuario: la música de fondo seguía sonando al cerrar o minimizar la app. `App` ahora observa el ciclo de vida (`WidgetsBindingObserver`) y pausa la música en `paused`/`detached`/`hidden`, reanudándola en `resumed`. `IAudioService` suma `pauseMusic()`/`resumeMusic()`
+
+## Notas
+- Este bug se volvió mucho más notorio tras la música de menú agregada en 0.5.7 (antes solo sonaba durante una partida activa)
+
+---
+
+## [0.5.7] — 2026-07-11
+
+### Añadido — Fase 6: dos mejoras técnicas pendientes
+- El `playerId` del jugador local ahora se persiste con `shared_preferences` (`playerIdProvider`), en vez de generarse de nuevo en cada rebuild — sin esto, reconectar tras un crash siempre parecía un jugador nuevo para el host, que empareja las reconexiones por `playerId`
+- Música de menú (`AssetPaths.musicMenu`) ahora suena en Splash/Home/Lobby/Ajustes vía el nuevo `MenuMusicMixin` — antes solo `GameScreen`/`GameOverScreen` tenían música. A diferencia de esas dos pantallas, no se corta al salir de cada una (todas piden la misma pista y `AudioService` no reinicia una que ya está sonando), así que navegar entre menús no corta ni reinicia la música
+
+### Limpieza
+- `HomeScreen` y `SplashScreen` pasaron de `Stateless(Widget)` a `Consumer(Stateful)Widget` para poder alojar el mixin de música
+
+---
+
 ## [0.5.6] — 2026-07-11
 
 ### Corregido
