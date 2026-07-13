@@ -11,6 +11,17 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.5.9] — 2026-07-11
+
+### Corregido
+- `MdnsAdvertiser` volvía a anunciar el `playerCount` original de la sala cada `interval` (~3s), pisando cualquier `updatePlayerCount()` posterior — el `Timer.periodic` capturaba una única foto del estado en vez de leerlo actualizado en cada tick. De paso, `updatePlayerCount` ya no repite `roomId`/`hostName` (cierra el TODO correspondiente)
+
+### Documentación
+- `docs/ARCHITECTURE.md` seguía describiendo Fase 5 (red/reconexión) como pendiente pese a estar completa hace tiempo, con un diagrama de fases de turno que mostraba transiciones que el motor nunca ejecuta (`drawRequired`/`ended`) y un ejemplo de Riverpod con codegen que no coincide con el patrón manual real del proyecto — todo corregido
+- `docs/VERIFICATION_LOG.md` y `ROADMAP.md` actualizados: el bug del "servidor fantasma" y la música de menú ya no figuran como pendientes, ambos se resolvieron en commits anteriores de esta rama
+
+---
+
 ## [0.5.8] — 2026-07-11
 
 ### Corregido
