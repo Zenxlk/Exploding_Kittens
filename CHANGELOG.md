@@ -11,6 +11,16 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.5.10] — 2026-07-13
+
+### Corregido
+- `MdnsDiscoverer` confiaba en el `hostAddress` autoreportado de un beacon; ahora siempre usa la IP de origen observada por el socket, cerrando el caso de un beacon con una IP mentirosa o mal configurada
+
+### Refactor
+- `LobbyRepository` mezclaba estado de host (`_advertiser`, `_playerCountSub`) y de cliente (`_discoverer`) como campos planos en la misma clase. Se extrajeron `HostBeaconSync`/`ClientRoomDiscovery`; sin cambios en `ILobbyRepository` ni en ningún consumidor
+
+---
+
 ## [0.5.9] — 2026-07-11
 
 ### Corregido

@@ -95,6 +95,8 @@ empezar la siguiente.
 - [ ] `WifiManager.MulticastLock` vía platform channel en Android 10+
 - [x] Persistir `playerId` con `shared_preferences` para reconexión tras crash
 - [x] Reproducir `AssetPaths.musicMenu` en Home/Splash/Lobby/Settings (`MenuMusicMixin`; antes solo `GameScreen`/`GameOverScreen` tenían música vía `AudioService`)
+- [x] Validar `hostAddress` de un beacon contra la IP real del remitente (`MdnsDiscoverer`), en vez de confiar ciegamente en el valor autoreportado
+- [x] Separar el manejo mDNS de host/cliente de `LobbyRepository` en clases propias (`HostBeaconSync`/`ClientRoomDiscovery`)
 
 ### Bots / modo offline
 - [ ] Interfaz `BotStrategy` con implementación básica (aleatoria)
