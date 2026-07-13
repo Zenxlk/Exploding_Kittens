@@ -29,6 +29,7 @@ sealed class TurnAction extends Equatable {
       'play_cat_trio' => PlayCatTrioAction._fromJson(j),
       'defuse_bomb' => DefuseBombAction._fromJson(j),
       'nope' => NopeAction._fromJson(j),
+      'choose_card' => ChooseCardAction._fromJson(j),
       final t => throw FormatException('Unknown TurnAction type: $t'),
     };
   }
@@ -190,6 +191,34 @@ final class DefuseBombAction extends TurnAction {
 
   @override
   List<Object?> get props => [playerId, defuseCard, insertAtPosition];
+}
+
+/// Elige una carta concreta para resolver una acción pendiente —
+/// `GameState.pendingAction` decide de qué mano sale y quién la recibe (ver
+/// `ActionProcessor._processChooseCard`). Hoy solo la dispara el objetivo de
+/// un Favor (elige qué carta de su propia mano entrega); [playerId] es quien
+/// elige, no necesariamente el jugador activo del turno — a propósito
+/// genérica para poder reusarse con otra "elegí una carta concreta" futura
+/// (p. ej. el trío de gatos, donde en cambio elegiría el actor).
+final class ChooseCardAction extends TurnAction {
+  const ChooseCardAction({
+    required super.playerId,
+    required this.cardId,
+  });
+  final String cardId;
+
+  factory ChooseCardAction._fromJson(Map<String, dynamic> j) =>
+      ChooseCardAction(
+        playerId: j['playerId'] as String,
+        cardId: j['cardId'] as String,
+      );
+
+  @override
+  Map<String, dynamic> toJson() =>
+      {'type': 'choose_card', 'playerId': playerId, 'cardId': cardId};
+
+  @override
+  List<Object?> get props => [playerId, cardId];
 }
 
 /// Jugar Nope sobre la acción anterior en cadena

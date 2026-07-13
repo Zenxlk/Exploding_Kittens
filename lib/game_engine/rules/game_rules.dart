@@ -55,6 +55,19 @@ abstract final class GameRules {
         if (!CardRules.canNope(player, state)) {
           throw const InvalidActionException('No puedes jugar Nope ahora');
         }
+      case ChooseCardAction(:final cardId):
+        _mustBeInPhase(state, TurnPhase.awaitingCardChoice);
+        switch (state.pendingAction) {
+          case PlayFavorAction(:final targetPlayerId):
+            if (action.playerId != targetPlayerId) {
+              throw const InvalidActionException('No te toca elegir una carta');
+            }
+            _playerMustHaveCard(targetPlayerId, cardId, state);
+          default:
+            throw const InvalidActionException(
+              'No hay ninguna elección de carta pendiente',
+            );
+        }
     }
   }
 
@@ -107,6 +120,15 @@ abstract final class GameRules {
       if (!player.hand.any((c) => c.id == card.id)) {
         throw InvalidActionException('No tienes la carta ${card.id}');
       }
+    }
+  }
+
+  static void _playerMustHaveCard(
+      String playerId, String cardId, GameState state) {
+    final player = state.playerById(playerId);
+    if (player == null) throw const GameException('Jugador no encontrado');
+    if (!player.hand.any((c) => c.id == cardId)) {
+      throw InvalidActionException('No tienes la carta $cardId');
     }
   }
 }

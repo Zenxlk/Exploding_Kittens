@@ -93,6 +93,15 @@ void main() {
       expect((restored as NopeAction).nopeCard, action.nopeCard);
     });
 
+    test('ChooseCardAction round-trip', () {
+      const action = ChooseCardAction(playerId: 'p2', cardId: 'card-1');
+      final restored = TurnAction.fromJson(action.toJson());
+      expect(restored, isA<ChooseCardAction>());
+      final r = restored as ChooseCardAction;
+      expect(r.playerId, 'p2');
+      expect(r.cardId, 'card-1');
+    });
+
     test('fromJson lanza FormatException con un type desconocido', () {
       expect(
         () => TurnAction.fromJson({'type': 'unknown', 'playerId': 'p1'}),

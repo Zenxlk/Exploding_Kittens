@@ -110,10 +110,22 @@ void main() {
 
       final resolved = ActionProcessor.resolveNopeWindow(afterPlay);
 
-      expect(resolved.turn.phase, TurnPhase.playing);
-      expect(resolved.pendingAction, isNull);
-      expect(resolved.playerById('p1')!.hand, [targetCard]);
-      expect(resolved.playerById('p2')!.hand, isEmpty);
+      // Ya no se resuelve solo: espera a que p2 elija qué carta entregar
+      // (ver ChooseCardAction) — el robo todavía no ocurrió.
+      expect(resolved.turn.phase, TurnPhase.awaitingCardChoice);
+      expect(resolved.pendingAction, action);
+      expect(resolved.playerById('p1')!.hand, isEmpty);
+      expect(resolved.playerById('p2')!.hand, [targetCard]);
+
+      final chosen = ActionProcessor.process(
+        const ChooseCardAction(playerId: 'p2', cardId: 'target-1'),
+        resolved,
+      );
+
+      expect(chosen.turn.phase, TurnPhase.playing);
+      expect(chosen.pendingAction, isNull);
+      expect(chosen.playerById('p1')!.hand, [targetCard]);
+      expect(chosen.playerById('p2')!.hand, isEmpty);
     });
 
     test('un Nope impar cancela el robo de Favor', () {
@@ -185,19 +197,26 @@ void main() {
         );
         final resolved = ActionProcessor.resolveNopeWindow(afterPlay);
 
-        // El turno sigue siendo de p1 — jugar Favor no lo termina.
+        // El turno sigue siendo de p1 — jugar Favor no lo termina —, pero
+        // ahora espera a que p2 elija qué carta entregar.
         expect(resolved.turn.currentPlayerId, 'p1');
-        expect(resolved.turn.phase, TurnPhase.playing);
+        expect(resolved.turn.phase, TurnPhase.awaitingCardChoice);
+
+        final chosen = ActionProcessor.process(
+          const ChooseCardAction(playerId: 'p2', cardId: 'target-1'),
+          resolved,
+        );
+        expect(chosen.turn.phase, TurnPhase.playing);
 
         final afterDraw = ActionProcessor.process(
           const DrawCardAction(playerId: 'p1'),
-          resolved,
+          chosen,
         );
 
         // El robo normal de p1 sí debe pasar el turno a p2.
         expect(afterDraw.turn.currentPlayerId, 'p2');
         expect(afterDraw.turn.phase, TurnPhase.playing);
-        expect(afterDraw.turnCount, resolved.turnCount + 1);
+        expect(afterDraw.turnCount, chosen.turnCount + 1);
       },
     );
 
@@ -324,6 +343,38 @@ void main() {
         drawPile.map((c) => c.id).toSet(),
       );
     });
+
+    test(
+      'Favor contra un objetivo sin cartas se resuelve solo, sin pedirle '
+      'que elija nada',
+      () {
+        const favorCard = CardModel(id: 'favor-1', type: CardType.favor);
+        final p1 = PlayerModel(id: 'p1', name: 'A', hand: const [favorCard]);
+        final p2 = PlayerModel(id: 'p2', name: 'B', hand: const []);
+
+        final state = baseState(
+          players: [p1, p2],
+          deck: const DeckModel(drawPile: [], discardPile: []),
+          currentPlayerId: 'p1',
+        );
+
+        final afterPlay = ActionProcessor.process(
+          const PlayFavorAction(
+            playerId: 'p1',
+            card: favorCard,
+            targetPlayerId: 'p2',
+          ),
+          state,
+        );
+        final resolved = ActionProcessor.resolveNopeWindow(afterPlay);
+
+        // No hay nada que elegir — no se queda esperando una elección.
+        expect(resolved.turn.phase, TurnPhase.playing);
+        expect(resolved.pendingAction, isNull);
+        expect(resolved.playerById('p1')!.hand, isEmpty);
+        expect(resolved.playerById('p2')!.hand, isEmpty);
+      },
+    );
   });
 
   group('Eliminación — orden cronológico', () {

@@ -23,6 +23,7 @@ abstract final class ActionProcessor {
       PlayCatTrioAction() => _processCatTrio(action, state),
       DefuseBombAction() => _processDefuse(action, state),
       NopeAction() => _processNope(action, state),
+      ChooseCardAction() => _processChooseCard(action, state),
     };
   }
 
@@ -179,32 +180,67 @@ abstract final class ActionProcessor {
   // ── Resolución de la ventana de Nope ──────────────────────────────────────────
 
   /// Cierra la ventana de Nope: si la cadena quedó cancelada (nopeChainCount
-  /// impar) descarta el efecto pendiente sin aplicarlo; si no, lo aplica ahora.
+  /// impar) descarta el efecto pendiente sin aplicarlo; si no, lo aplica ahora
+  /// — excepto Favor, que en vez de robar una carta al azar deja que el
+  /// objetivo elija cuál entregar (ver ChooseCardAction más abajo): la
+  /// ventana pasa a `awaitingCardChoice` sin limpiar `pendingAction`, porque
+  /// todavía hace falta saber quién pidió la carta y a quién se la piden.
   /// No es una acción de jugador (la dispara un temporizador), por lo que no
   /// pasa por GameRules.validate.
   static GameState resolveNopeWindow(GameState state) {
     var next = state;
+    var awaitingCardChoice = false;
 
     if (!state.turn.isNoped) {
-      next = switch (state.pendingAction) {
-        PlayFavorAction(:final playerId, :final targetPlayerId) =>
-          _stealRandomCard(playerId, targetPlayerId, next),
-        PlayCatPairAction(:final playerId, :final targetPlayerId) =>
-          _stealRandomCard(playerId, targetPlayerId, next),
-        PlayCatTrioAction(
-          :final playerId,
-          :final targetPlayerId,
-          :final chosenCardId
-        ) =>
-          _stealChosenCard(playerId, targetPlayerId, chosenCardId, next),
-        PlayCardAction(:final card) when card.type == CardType.shuffle =>
-          _resolveShuffle(next),
-        _ => next,
-      };
+      switch (state.pendingAction) {
+        case PlayFavorAction(:final targetPlayerId):
+          final target = next.playerById(targetPlayerId);
+          // Si el objetivo no tiene cartas, no hay nada que elegir — se
+          // resuelve como no-op, igual que un par de gatos contra una mano
+          // vacía.
+          awaitingCardChoice = target != null && target.hand.isNotEmpty;
+        case PlayCatPairAction(:final playerId, :final targetPlayerId):
+          next = _stealRandomCard(playerId, targetPlayerId, next);
+        case PlayCatTrioAction(
+            :final playerId,
+            :final targetPlayerId,
+            :final chosenCardId
+          ):
+          next = _stealChosenCard(playerId, targetPlayerId, chosenCardId, next);
+        case PlayCardAction(:final card) when card.type == CardType.shuffle:
+          next = _resolveShuffle(next);
+        default:
+          break;
+      }
+    }
+
+    if (awaitingCardChoice) {
+      return next.copyWith(
+        turn: next.turn.copyWith(
+          phase: TurnPhase.awaitingCardChoice,
+          nopeChainCount: 0,
+        ),
+      );
     }
 
     return next.copyWith(
       turn: next.turn.copyWith(phase: TurnPhase.playing, nopeChainCount: 0),
+      clearPendingAction: true,
+    );
+  }
+
+  // ── Elegir una carta concreta (hoy: respuesta de Favor) ───────────────────────
+
+  static GameState _processChooseCard(
+      ChooseCardAction action, GameState state) {
+    final next = switch (state.pendingAction) {
+      PlayFavorAction(:final playerId, :final targetPlayerId) =>
+        _stealChosenCard(playerId, targetPlayerId, action.cardId, state),
+      _ => state,
+    };
+
+    return next.copyWith(
+      turn: next.turn.copyWith(phase: TurnPhase.playing),
       clearPendingAction: true,
     );
   }
