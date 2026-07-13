@@ -104,27 +104,37 @@ Nope chain: `TurnModel.nopeChainCount` impar = acción cancelada.
 ```
 LobbyScreen  →  lobbyProvider (LobbyNotifier)  →  LobbyRepository
                                                         │
-                                        ┌───────────────┼───────────────┐
-                                        ▼               ▼               ▼
-                                    WsServer        WsClient      MdnsAdvertiser /
-                                  (host only)   (todos, incl.      MdnsDiscoverer
-                                                 host vía 127.0.0.1)  (host / cliente)
+                                ┌───────────────┬───────┼───────┬───────────────┐
+                                ▼               ▼               ▼               ▼
+                            WsServer        WsClient      HostBeaconSync  ClientRoomDiscovery
+                          (host only)   (todos, incl.       (host only,      (cliente only,
+                                         host vía 127.0.0.1)  MdnsAdvertiser)  MdnsDiscoverer)
 ```
 
 `LobbyRepository` implementa `ILobbyRepository` y es la única clase que conoce
 los cuatro colaboradores. El host levanta `WsServer` y además se conecta a su
 propio servidor como cliente (`127.0.0.1`), de modo que host y no-host comparten
-exactamente el mismo camino de código (`WsClient` + `roomStream`).
+exactamente el mismo camino de código (`WsClient` + `roomStream`). El manejo
+mDNS de host (`HostBeaconSync`) y de cliente (`ClientRoomDiscovery`) está
+separado en clases propias — antes vivían como campos sueltos dentro de
+`LobbyRepository`.
 
 ### Descubrimiento de salas
 
-`MdnsAdvertiser` (host) envía un beacon JSON por UDP broadcast a
-`255.255.255.255:AppConstants.discoveryPort` cada pocos segundos.
-`MdnsDiscoverer` (cliente) escucha ese puerto y expone
-`Stream<List<DiscoveredRoom>>` con las salas vivas.
+`MdnsAdvertiser` (host) y `MdnsDiscoverer` (cliente) usan mDNS/DNS-SD real
+vía el paquete `nsd` (Bonjour en Apple, NsdManager en Android), registrando
+y descubriendo `AppConstants.mdnsServiceType` (`_explkittens._tcp`). La
+sala se anuncia con un `Service` cuyo `txt` lleva `hostName`/`playerCount`/
+`maxPlayers`; la dirección del host (`Service.addresses`) la resuelve el
+propio protocolo mDNS, no un campo autoreportado. `nsd` no permite
+actualizar el `txt` de un registro activo: `MdnsAdvertiser.updatePlayerCount`
+des-registra y vuelve a registrar con los valores nuevos.
 
-> No es mDNS/Bonjour real — es un broadcast UDP propio con el mismo propósito.
-> Migrar a la librería `nsd` o `multicast_dns` es una mejora pendiente (ver `ROADMAP.md`).
+> Migrado en Fase 6 desde un broadcast UDP propio (no mDNS/Bonjour real).
+> **Sin verificar en un dispositivo real todavía** — `nsd` es enteramente
+> nativo, sin implementación en Dart puro para ejercitar el registro/
+> descubrimiento real desde un entorno de desarrollo sin dispositivo; los
+> tests mockean `NsdPlatformInterface` y solo cubren la lógica propia.
 
 ### Protocolo WebSocket del lobby
 

@@ -13,8 +13,8 @@ import 'package:exploding_kittens/network/websocket/websocket_server.dart';
 // Implementa ILobbyRepository coordinando:
 //   WsServer            — servidor TCP local (solo host)
 //   WsClient             — cliente WebSocket (todos, incluido el host vía 127.0.0.1)
-//   HostBeaconSync       — beacon UDP de MdnsAdvertiser (solo host)
-//   ClientRoomDiscovery  — escucha de beacons de MdnsDiscoverer (solo cliente)
+//   HostBeaconSync       — registro mDNS de MdnsAdvertiser (solo host)
+//   ClientRoomDiscovery  — descubrimiento mDNS de MdnsDiscoverer (solo cliente)
 class LobbyRepository implements ILobbyRepository {
   WsServer? _server;
   WsClient? _client;

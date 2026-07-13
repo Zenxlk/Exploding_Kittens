@@ -1,61 +1,63 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:exploding_kittens/features/lobby/data/client_room_discovery.dart';
 import 'package:exploding_kittens/features/lobby/domain/models/discovered_room.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nsd_platform_interface/nsd_platform_interface.dart';
 
-// Test de integración: UDP real en loopback, puerto dedicado propio (evita
-// chocar con otros archivos de test de red cuando flutter test corre todo
-// en paralelo, el comportamiento por defecto).
-const _testDiscoveryPort = 18903;
+import '../../../network/wifi/fake_nsd_platform.dart';
 
+// Solo verifica la lógica propia de ClientRoomDiscovery contra un
+// FakeNsdPlatform (igual que mdns_discoverer_test.dart) — no ejercita el
+// descubrimiento mDNS real.
 void main() {
+  late FakeNsdPlatform fake;
+
+  setUp(() {
+    fake = FakeNsdPlatform();
+    NsdPlatformInterface.instance = fake;
+  });
+
+  const room = DiscoveredRoom(
+    roomId: 'room-1',
+    hostName: 'Ana',
+    hostAddress: '192.168.1.10',
+    port: 8765,
+    playerCount: 1,
+    maxPlayers: 5,
+  );
+
+  Service serviceFor(DiscoveredRoom r) => Service(
+        name: r.roomId,
+        type: 'test',
+        port: r.port,
+        addresses: [InternetAddress(r.hostAddress)],
+        txt: {
+          'hostName': Uint8List.fromList(utf8.encode(r.hostName)),
+          'playerCount': Uint8List.fromList(utf8.encode('${r.playerCount}')),
+          'maxPlayers': Uint8List.fromList(utf8.encode('${r.maxPlayers}')),
+        },
+      );
+
   group('ClientRoomDiscovery', () {
-    late RawDatagramSocket sender;
-
-    setUp(() async {
-      sender = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
-    });
-
-    tearDown(() {
-      sender.close();
-    });
-
-    const room = DiscoveredRoom(
-      roomId: 'room-1',
-      hostName: 'Ana',
-      hostAddress: '127.0.0.1',
-      port: 8765,
-      playerCount: 1,
-      maxPlayers: 5,
-    );
-
-    void sendBeacon(DiscoveredRoom r) {
-      final payload = utf8.encode(jsonEncode(r.toJson()));
-      sender.send(payload, InternetAddress('127.0.0.1'), _testDiscoveryPort);
-    }
-
     test('discover() expone las salas que van llegando', () async {
       final discovery = ClientRoomDiscovery();
       addTearDown(discovery.stop);
 
       final events = <List<DiscoveredRoom>>[];
-      final sub = discovery.discover(port: _testDiscoveryPort).listen(
-            events.add,
-          );
+      final sub = discovery.discover().listen(events.add);
       addTearDown(sub.cancel);
 
-      // discover() es un generador async* que recién se pone en marcha
-      // (y arranca el socket) cuando alguien se suscribe — esta espera le
-      // da tiempo a llegar al start() antes de mandar el beacon.
-      await Future.delayed(const Duration(milliseconds: 100));
-      sendBeacon(room);
+      // discover() es un generador async* que recién arranca la búsqueda
+      // cuando alguien se suscribe.
+      await Future<void>.delayed(Duration.zero);
+      fake.lastDiscovery!.add(serviceFor(room));
+      // El StreamController es broadcast: add() entrega a los listeners
+      // en un microtask, no sincrónicamente.
+      await Future<void>.delayed(Duration.zero);
 
-      await Future.doWhile(() async {
-        await Future.delayed(const Duration(milliseconds: 10));
-        return events.isEmpty;
-      }).timeout(const Duration(seconds: 2));
       expect(events.last, [room]);
     });
 
@@ -66,43 +68,19 @@ void main() {
         final discovery = ClientRoomDiscovery();
         addTearDown(discovery.stop);
 
-        final firstEvents = <List<DiscoveredRoom>>[];
-        final firstSub = discovery.discover(port: _testDiscoveryPort).listen(
-              firstEvents.add,
-            );
-        await Future.delayed(const Duration(milliseconds: 100));
-        sendBeacon(room);
-        await Future.doWhile(() async {
-          await Future.delayed(const Duration(milliseconds: 10));
-          return firstEvents.isEmpty;
-        }).timeout(const Duration(seconds: 2));
+        final firstSub = discovery.discover().listen((_) {});
+        await Future<void>.delayed(Duration.zero);
+        fake.lastDiscovery!.add(serviceFor(room));
         await firstSub.cancel();
 
-        // Un segundo discover() no debería seguir viendo la sala anterior
-        // sin un beacon nuevo — el estado se descarta al reiniciar.
+        // Un segundo discover() usa una Discovery nueva del fake — no
+        // debería arrastrar el servicio que ya se había encontrado.
         final events = <List<DiscoveredRoom>>[];
-        final sub = discovery.discover(port: _testDiscoveryPort).listen(
-              events.add,
-            );
+        final sub = discovery.discover().listen(events.add);
         addTearDown(sub.cancel);
+        await Future<void>.delayed(Duration.zero);
 
-        await Future.delayed(const Duration(milliseconds: 200));
-        expect(events, isEmpty);
-
-        const room2 = DiscoveredRoom(
-          roomId: 'room-2',
-          hostName: 'Beto',
-          hostAddress: '127.0.0.1',
-          port: 8765,
-          playerCount: 1,
-          maxPlayers: 5,
-        );
-        sendBeacon(room2);
-        await Future.doWhile(() async {
-          await Future.delayed(const Duration(milliseconds: 10));
-          return events.isEmpty;
-        }).timeout(const Duration(seconds: 2));
-        expect(events.last, [room2]);
+        expect(fake.lastDiscovery!.services, isEmpty);
       },
     );
   });

@@ -45,6 +45,7 @@ dependencies:
   gap: ^3.0.1
 
   cupertino_icons: ^1.0.8
+  nsd: ^5.0.1
 
 dev_dependencies:
   flutter_test:
@@ -60,6 +61,7 @@ dev_dependencies:
 
   # Testing
   mocktail: ^1.0.4
+  nsd_platform_interface: ^2.2.0
 
   flutter_lints: ^6.0.0
 

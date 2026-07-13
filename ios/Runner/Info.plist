@@ -51,9 +51,10 @@
 	<true/>
 	<!--
 	  iOS 14+ requires this key to access the local network (WebSocket server,
-	  UDP broadcast discovery). Without it the OS silently blocks all LAN traffic.
-	  TODO(improvement): add com.apple.developer.networking.multicast entitlement
-	  in Runner.entitlements when switching MdnsAdvertiser to true multicast groups.
+	  mDNS discovery via nsd). Without it the OS silently blocks all LAN traffic.
+	  No com.apple.developer.networking.multicast entitlement needed: nsd_ios
+	  uses the standard NetServiceBrowser/NetService (Bonjour) APIs, not raw
+	  multicast sockets — that entitlement is only for the latter.
 	-->
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Exploding Kittens uses your local network to host and join games with nearby players over Wi-Fi.</string>

@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:exploding_kittens/core/constants/app_constants.dart';
 import 'package:exploding_kittens/features/lobby/domain/models/lobby_room.dart';
 import 'package:exploding_kittens/network/wifi/mdns_advertiser.dart';
 
@@ -13,15 +12,12 @@ class HostBeaconSync {
   MdnsAdvertiser? _advertiser;
   StreamSubscription<LobbyRoom>? _sub;
 
-  // [discoveryPort] es sobreescribible para que los tests usen su propio
-  // puerto en vez del AppConstants.discoveryPort real.
   Future<void> start({
     required String roomId,
     required String hostName,
     required int playerCount,
     required int maxPlayers,
     required Stream<LobbyRoom> roomUpdates,
-    int discoveryPort = AppConstants.discoveryPort,
   }) async {
     _advertiser = MdnsAdvertiser();
     await _advertiser!.start(
@@ -29,7 +25,6 @@ class HostBeaconSync {
       hostName: hostName,
       playerCount: playerCount,
       maxPlayers: maxPlayers,
-      discoveryPort: discoveryPort,
     );
 
     _sub = roomUpdates.listen((room) {

@@ -1,134 +1,76 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:nsd/nsd.dart';
 
 import 'package:exploding_kittens/core/constants/app_constants.dart';
-
 import 'package:exploding_kittens/features/lobby/domain/models/discovered_room.dart';
 
-// Descubre salas en la red local escuchando los beacons UDP que manda
-// MdnsAdvertiser.
+// Descubre salas en la red local vía mDNS/DNS-SD real (Bonjour en Apple,
+// NsdManager en Android), usando el paquete `nsd`.
 //
-// Uso:
-//   final discoverer = MdnsDiscoverer();
-//   discoverer.rooms.listen((rooms) => setState(() => _rooms = rooms));
-//   await discoverer.start();
-//   // ... mostrar la UI
-//   await discoverer.stop();
-//
-// TODO(improvement): también consultar registros PTR de mDNS para
-// AppConstants.mdnsServiceType usando el paquete `multicast_dns` una vez que
-// el anuncio mDNS real esté implementado (ver MdnsAdvertiser). Combinar
-// ambas fuentes con rx_dart merge o un StreamGroup simple para que
-// funcione cualquiera de los dos mecanismos.
+// NO VERIFICADO EN UN DISPOSITIVO REAL TODAVÍA — ver la nota en
+// MdnsAdvertiser, aplica igual acá. A diferencia de la versión anterior
+// basada en UDP broadcast, no hace falta podar salas manualmente: el
+// propio NsdManager/Bonjour notifica ServiceStatus.lost cuando una sala
+// deja de anunciarse, así que ya no hace falta un `staleAfter` propio.
 class MdnsDiscoverer {
-  MdnsDiscoverer({
-    Duration staleAfter = const Duration(seconds: 10),
-    Duration pruneInterval = const Duration(seconds: 2),
-  })  : _staleAfter = staleAfter,
-        _pruneInterval = pruneInterval;
-
-  final Duration _staleAfter;
-  final Duration _pruneInterval;
+  Discovery? _discovery;
   final _roomsController = StreamController<List<DiscoveredRoom>>.broadcast();
-  final _rooms = <String, DiscoveredRoom>{}; // roomId → sala
-  final _lastSeen = <String, DateTime>{}; // roomId → último beacon recibido
-  RawDatagramSocket? _socket;
-  Timer? _pruneTimer;
 
-  // Emite la lista actual cada vez que llega un beacon nuevo o se poda una sala.
+  // Emite la lista actual cada vez que se encuentra o se pierde una sala.
   Stream<List<DiscoveredRoom>> get rooms => _roomsController.stream;
 
-  // Se conecta a discoveryPort y empieza a recolectar beacons. [port] es
-  // sobreescribible para que los tests usen su propio puerto y no choquen
-  // con otros archivos de test que usan este mismo puerto fijo de producción.
-  Future<void> start({int port = AppConstants.discoveryPort}) async {
-    _socket = await RawDatagramSocket.bind(
-      InternetAddress.anyIPv4,
-      port,
-      reuseAddress: true,
-    );
-
-    _socket!.listen(
-      (event) {
-        if (event != RawSocketEvent.read) return;
-        final datagram = _socket!.receive();
-        if (datagram != null) _handleDatagram(datagram);
-      },
-      onError: (_) {},
-      cancelOnError: false,
-    );
-
-    // El host deja de mandar beacons al cerrar, pero nunca avisa que se
-    // fue, así que sin esto una sala cerrada quedaba listada hasta
-    // reiniciar la app. Cualquier beacon con más de `_staleAfter` de
-    // antigüedad (~3 beacons perdidos con el intervalo por defecto de 3s
-    // del advertiser) se descarta.
-    _pruneTimer = Timer.periodic(_pruneInterval, (_) => _pruneStale());
-  }
-
-  void _handleDatagram(Datagram datagram) {
-    try {
-      final json =
-          jsonDecode(utf8.decode(datagram.data)) as Map<String, dynamic>;
-      if (json['type'] != 'room_beacon') return;
-
-      // No confía en el hostAddress autoreportado del beacon: siempre usa
-      // la IP de origen que el socket observó (datagram.address), que un
-      // remitente en la misma red no puede falsificar sin privilegios de
-      // socket crudo. Para un beacon legítimo ambos valores ya coinciden
-      // (es la IP real del host anunciándose por broadcast), así que esto
-      // no cambia el comportamiento normal — solo cierra el caso de un
-      // beacon con un hostAddress mentiroso o mal configurado.
-      var room = DiscoveredRoom.fromJson(json);
-      final observedAddress = datagram.address.address;
-      if (room.hostAddress != observedAddress) {
-        room = DiscoveredRoom(
-          roomId: room.roomId,
-          hostName: room.hostName,
-          hostAddress: observedAddress,
-          port: room.port,
-          playerCount: room.playerCount,
-          maxPlayers: room.maxPlayers,
-        );
-      }
-      _rooms[room.roomId] = room;
-      _lastSeen[room.roomId] = DateTime.now();
-
-      _emit();
-    } catch (_) {
-      // Ignora datagramas mal formados o que no son un beacon.
-    }
-  }
-
-  void _pruneStale() {
-    final cutoff = DateTime.now().subtract(_staleAfter);
-    final staleIds = _lastSeen.entries
-        .where((e) => e.value.isBefore(cutoff))
-        .map((e) => e.key)
-        .toList();
-    if (staleIds.isEmpty) return;
-
-    for (final id in staleIds) {
-      _rooms.remove(id);
-      _lastSeen.remove(id);
-    }
+  Future<void> start({
+    String serviceType = AppConstants.mdnsServiceType,
+  }) async {
+    final discovery = await startDiscovery(serviceType);
+    discovery.addServiceListener(_onServiceEvent);
+    _discovery = discovery;
     _emit();
   }
 
+  void _onServiceEvent(Service service, ServiceStatus status) => _emit();
+
   void _emit() {
-    if (!_roomsController.isClosed) {
-      _roomsController.add(List.unmodifiable(_rooms.values));
-    }
+    final discovery = _discovery;
+    if (discovery == null || _roomsController.isClosed) return;
+
+    final rooms = discovery.services
+        .map(_toDiscoveredRoom)
+        .whereType<DiscoveredRoom>()
+        .toList();
+    _roomsController.add(rooms);
   }
 
+  DiscoveredRoom? _toDiscoveredRoom(Service service) {
+    final roomId = service.name;
+    final hostAddress = service.addresses?.firstOrNull?.address;
+    final port = service.port;
+    if (roomId == null || hostAddress == null || port == null) return null;
+
+    final txt = service.txt ?? const {};
+    return DiscoveredRoom(
+      roomId: roomId,
+      hostName: _decodeTxt(txt['hostName']) ?? roomId,
+      hostAddress: hostAddress,
+      port: port,
+      playerCount: int.tryParse(_decodeTxt(txt['playerCount']) ?? '') ?? 0,
+      maxPlayers: int.tryParse(_decodeTxt(txt['maxPlayers']) ?? '') ?? 0,
+    );
+  }
+
+  static String? _decodeTxt(Uint8List? bytes) =>
+      bytes == null ? null : utf8.decode(bytes);
+
   Future<void> stop() async {
-    _pruneTimer?.cancel();
-    _pruneTimer = null;
-    _socket?.close();
-    _socket = null;
-    _rooms.clear();
-    _lastSeen.clear();
+    final discovery = _discovery;
+    _discovery = null;
+    if (discovery != null) {
+      discovery.removeServiceListener(_onServiceEvent);
+      await stopDiscovery(discovery);
+    }
     await _roomsController.close();
   }
 }

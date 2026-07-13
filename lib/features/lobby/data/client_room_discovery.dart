@@ -1,4 +1,3 @@
-import 'package:exploding_kittens/core/constants/app_constants.dart';
 import 'package:exploding_kittens/features/lobby/domain/models/discovered_room.dart';
 import 'package:exploding_kittens/network/wifi/mdns_discoverer.dart';
 
@@ -9,14 +8,10 @@ import 'package:exploding_kittens/network/wifi/mdns_discoverer.dart';
 class ClientRoomDiscovery {
   MdnsDiscoverer? _discoverer;
 
-  // [port] es sobreescribible para que los tests usen su propio puerto en
-  // vez del AppConstants.discoveryPort real.
-  Stream<List<DiscoveredRoom>> discover({
-    int port = AppConstants.discoveryPort,
-  }) async* {
+  Stream<List<DiscoveredRoom>> discover() async* {
     await stop();
     _discoverer = MdnsDiscoverer();
-    await _discoverer!.start(port: port);
+    await _discoverer!.start();
     yield* _discoverer!.rooms;
   }
 

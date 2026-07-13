@@ -39,15 +39,12 @@ empezar la siguiente.
 
 ## Fase 3 — Lobby local WiFi ✅
 
-- [x] `MdnsDiscoverer` — descubrimiento de salas via beacons UDP broadcast (sustituye al mDNS real previsto; ver nota abajo)
+- [x] `MdnsDiscoverer` — descubrimiento de salas (al principio via beacons UDP broadcast propios; migrado a mDNS/DNS-SD real con `nsd` en Fase 6, ver más abajo)
 - [x] `WsServer` — servidor WebSocket en el host (`AppConstants.localGamePort`)
 - [x] `LobbyRoom` / `LobbyPlayer` con estados vía `LobbyStatus`
 - [x] `LobbyRepository` — createRoom / joinRoom / leaveRoom / setReady / startGame (sin UseCases separados; coordinados directamente en el repositorio)
 - [x] `LobbyScreen` — creación de sala, descubrimiento y unión, lista de jugadores conectados con estado ready, botón de inicio
 - [x] Tests del lobby (modelos, repositorio, providers) — 34 tests nuevos, 51 totales
-
-> Nota: el descubrimiento usa UDP broadcast propio, no mDNS/Bonjour estándar.
-> Migrar a `nsd` o `multicast_dns` queda como mejora futura (Fase 6).
 
 ---
 
@@ -91,11 +88,11 @@ empezar la siguiente.
 ## Fase 6 — Futuro 🗓
 
 ### Mejoras técnicas pendientes
-- [ ] Migrar `MdnsAdvertiser` / `MdnsDiscoverer` de UDP broadcast a mDNS/Bonjour real (`nsd` o `multicast_dns`)
-- [ ] `WifiManager.MulticastLock` vía platform channel en Android 10+
+- [x] Migrar `MdnsAdvertiser` / `MdnsDiscoverer` de UDP broadcast a mDNS/Bonjour real (`nsd`) — **código completo pero sin verificar en un dispositivo real**: `nsd` es enteramente nativo (Bonjour en Apple, NsdManager en Android), sin implementación en Dart puro que se pueda ejercitar desde este entorno; los tests mockean `NsdPlatformInterface` y solo cubren la lógica propia, no el registro/descubrimiento mDNS real. `flutter build apk --debug` compila y linkea bien (el Kotlin nativo de `nsd_android` es válido), pero eso no prueba que el descubrimiento funcione en la práctica. Falta la misma verificación manual que se hizo para Fase 5 antes de confiar en esto
+- [x] `WifiManager.MulticastLock` vía platform channel en Android 10+ — resuelto como efecto colateral de la migración anterior: `nsd_android` ya lo adquiere internamente (usa el permiso `CHANGE_WIFI_MULTICAST_STATE` que ya estaba declarado), no hace falta un platform channel propio
 - [x] Persistir `playerId` con `shared_preferences` para reconexión tras crash
 - [x] Reproducir `AssetPaths.musicMenu` en Home/Splash/Lobby/Settings (`MenuMusicMixin`; antes solo `GameScreen`/`GameOverScreen` tenían música vía `AudioService`)
-- [x] Validar `hostAddress` de un beacon contra la IP real del remitente (`MdnsDiscoverer`), en vez de confiar ciegamente en el valor autoreportado
+- [x] Validar `hostAddress` de un beacon contra la IP real del remitente (`MdnsDiscoverer`), en vez de confiar ciegamente en el valor autoreportado — **superado por la migración a `nsd` de arriba**: la dirección ya viene resuelta por el propio protocolo mDNS (`Service.addresses`), no de un campo autoreportado, así que el caso de spoofing que esto cerraba ya no aplica con la nueva implementación
 - [x] Separar el manejo mDNS de host/cliente de `LobbyRepository` en clases propias (`HostBeaconSync`/`ClientRoomDiscovery`)
 
 ### Bots / modo offline
