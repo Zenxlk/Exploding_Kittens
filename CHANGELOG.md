@@ -11,6 +11,13 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.5.14] — 2026-07-13
+
+### Añadido
+- Trío de gatos jugable: el actor elige a ciegas (boca abajo, sin ver el tipo) una carta de la mano del objetivo, con el mismo mecanismo que se acababa de construir para Favor (`TurnPhase.awaitingCardChoice` + `ChooseCardAction`, pero eligiendo el actor en vez del objetivo). Estaba diferido desde Fase 4 porque el diseño anterior (`PlayCatTrioAction.chosenCardId` fijado al jugar la carta) nunca fue viable: el actor no puede ver la mano rival antes de jugar
+
+---
+
 ## [0.5.13] — 2026-07-13
 
 ### Corregido
