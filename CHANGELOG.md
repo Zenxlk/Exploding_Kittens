@@ -11,7 +11,10 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
-## [0.5.12] — 2026-07-13
+## [0.5.13] — 2026-07-13
+
+### Corregido
+- Reportado por el usuario: tras jugar Favor, nunca aparecía nada para que el objetivo eligiera qué carta entregar. `ActionProcessor` robaba una carta al azar (`_stealRandomCard`), igual que un par de gatos, aunque `docs/GAME_RULES.md` ya documentaba (incorrectamente) que el objetivo elegía. Ahora una nueva fase `TurnPhase.awaitingCardChoice` + `ChooseCardAction` (genérica a propósito, no específica de Favor) espera la elección real del objetivo antes de resolver
 
 ### Añadido
 - `SettingsScreen` ahora lee la versión real del build con `package_info_plus` (`appVersionProvider`) en vez de un string hardcodeado que había que actualizar a mano en cada commit `chore(version)` — este es el último bump que lo necesitó
