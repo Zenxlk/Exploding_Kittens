@@ -7,11 +7,11 @@ import 'package:exploding_kittens/game_engine/models/card/card_model.dart';
 import 'package:exploding_kittens/game_engine/models/card/card_type.dart';
 
 /// Selector genérico de "elegí una carta de esta lista", tocando la carta
-/// misma en vez de un botón aparte. Hoy solo lo usa Favor (el objetivo elige
-/// qué carta de su propia mano entregar), pero está pensado para reusarse
-/// con cualquier otra "elegí una carta concreta" futura (p. ej. el trío de
-/// gatos, donde en cambio elegiría el actor desde la mano del rival).
-/// Widget "tonto": no decide de dónde salen [candidates] ni a quién llega la
+/// misma en vez de un botón aparte. Lo usan Favor (el objetivo elige, boca
+/// arriba, qué carta de su propia mano entregar) y el trío de gatos (el
+/// actor elige a ciegas, boca abajo con [faceUp] en falso, de la mano del
+/// objetivo — no puede ver de qué se trata, solo la posición). Widget
+/// "tonto": no decide de dónde salen [candidates] ni a quién llega la
 /// elegida, solo reporta el id de la carta tocada.
 class CardChoiceOverlay extends StatelessWidget {
   const CardChoiceOverlay({
@@ -19,12 +19,14 @@ class CardChoiceOverlay extends StatelessWidget {
     required this.title,
     required this.candidates,
     required this.onSelect,
+    this.faceUp = true,
     this.assetPathFor,
   });
 
   final String title;
   final List<CardModel> candidates;
   final ValueChanged<String> onSelect;
+  final bool faceUp;
   final String? Function(CardType type)? assetPathFor;
 
   @override
@@ -49,7 +51,8 @@ class CardChoiceOverlay extends StatelessWidget {
                 for (final card in candidates)
                   CardWidget(
                     type: card.type,
-                    assetPath: assetPathFor?.call(card.type),
+                    faceUp: faceUp,
+                    assetPath: faceUp ? assetPathFor?.call(card.type) : null,
                     isPlayable: true,
                     onTap: () => onSelect(card.id),
                   ),

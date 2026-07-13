@@ -45,20 +45,23 @@ class _QuickPlaySelection extends _Selection {
   CardModel get card => cards.first;
 }
 
-/// Necesita elegir un jugador objetivo antes de resolverse (Favor o par de
-/// gatos). [isPair] distingue cuál de las dos acciones construir al confirmar.
+/// A qué acción corresponde una `_NeedsTargetSelection`.
+enum _TargetActionKind { favor, catPair, catTrio }
+
+/// Necesita elegir un jugador objetivo antes de resolverse (Favor, par o
+/// trío de gatos). [kind] distingue cuál de las tres acciones construir al
+/// confirmar.
 class _NeedsTargetSelection extends _Selection {
-  const _NeedsTargetSelection(super.cards, this.isPair);
-  final bool isPair;
+  const _NeedsTargetSelection(super.cards, this.kind);
+  final _TargetActionKind kind;
 }
 
-/// Una sola carta de gato esperando su pareja.
+/// Una sola carta de gato esperando su pareja (o su trío).
 class _CatCardWaitingForPair extends _Selection {
   const _CatCardWaitingForPair(super.cards);
 }
 
 /// Selección que no se puede jugar todavía desde aquí (Nope/Defuse sueltos,
-/// trío de gatos —necesita elegir una carta concreta de la mano rival—,
 /// combinaciones inválidas).
 class _UnsupportedSelection extends _Selection {
   const _UnsupportedSelection(super.cards);
@@ -73,7 +76,7 @@ _Selection _classifySelection(List<CardModel> cards) {
       return _QuickPlaySelection(card);
     }
     if (card.type == CardType.favor) {
-      return _NeedsTargetSelection(cards, false);
+      return _NeedsTargetSelection(cards, _TargetActionKind.favor);
     }
     if (card.type.isCatCard) {
       return _CatCardWaitingForPair(cards);
@@ -84,7 +87,13 @@ _Selection _classifySelection(List<CardModel> cards) {
   if (cards.length == 2 &&
       cards[0].type.isCatCard &&
       cards[0].type == cards[1].type) {
-    return _NeedsTargetSelection(cards, true);
+    return _NeedsTargetSelection(cards, _TargetActionKind.catPair);
+  }
+
+  if (cards.length == 3 &&
+      cards[0].type.isCatCard &&
+      cards.every((c) => c.type == cards[0].type)) {
+    return _NeedsTargetSelection(cards, _TargetActionKind.catTrio);
   }
 
   return _UnsupportedSelection(cards);
@@ -104,6 +113,7 @@ class GameTableView extends StatefulWidget {
     required this.onPlaySimpleCard,
     required this.onPlayFavor,
     required this.onPlayCatPair,
+    required this.onPlayCatTrio,
     required this.onPlayNope,
     required this.onDefuseBomb,
     required this.onChooseCard,
@@ -118,6 +128,8 @@ class GameTableView extends StatefulWidget {
   final void Function(CardModel card, String targetPlayerId) onPlayFavor;
   final void Function(List<CardModel> cards, String targetPlayerId)
       onPlayCatPair;
+  final void Function(List<CardModel> cards, String targetPlayerId)
+      onPlayCatTrio;
   final ValueChanged<CardModel> onPlayNope;
   final void Function(CardModel defuseCard, int insertAtPosition) onDefuseBomb;
   // Genérico a propósito (no "onGiveFavorCard"): hoy solo lo dispara el
@@ -177,6 +189,43 @@ class _GameTableViewState extends State<GameTableView> {
   bool get _canAct =>
       _isMyTurn && widget.gameState.turn.phase == TurnPhase.playing;
 
+  /// Si el jugador local es a quien le toca elegir una carta ahora mismo
+  /// (Favor: el objetivo, desde su propia mano; trío de gatos: el actor, a
+  /// ciegas desde la mano rival), arma los datos para el `CardChoiceOverlay`.
+  /// `null` para cualquier otro jugador — ellos ven el cartel de
+  /// `_StatusBanner` en su lugar.
+  ({String title, List<CardModel> candidates, bool faceUp})?
+      _pendingCardChoiceFor(List<CardModel> localHand) {
+    if (widget.gameState.turn.phase != TurnPhase.awaitingCardChoice) {
+      return null;
+    }
+    final pending = widget.gameState.pendingAction;
+
+    if (pending is PlayFavorAction &&
+        pending.targetPlayerId == widget.localPlayerId) {
+      final askerName =
+          widget.gameState.playerById(pending.playerId)?.name ?? '…';
+      return (
+        title: 'Elegí una carta para darle a $askerName',
+        candidates: localHand,
+        faceUp: true,
+      );
+    }
+
+    if (pending is PlayCatTrioAction &&
+        pending.playerId == widget.localPlayerId) {
+      final target = widget.gameState.playerById(pending.targetPlayerId);
+      return (
+        title: 'Elegí a ciegas una carta de la mano de '
+            '${target?.name ?? '…'}',
+        candidates: target?.hand ?? const [],
+        faceUp: false,
+      );
+    }
+
+    return null;
+  }
+
   void _onCardTap(CardModel card) {
     setState(() {
       if (_selectedCardIds.contains(card.id)) {
@@ -226,14 +275,7 @@ class _GameTableViewState extends State<GameTableView> {
     final resolvingMyBomb = _isMyTurn &&
         widget.gameState.turn.phase == TurnPhase.resolving &&
         widget.gameState.pendingBomb != null;
-    final pendingAction = widget.gameState.pendingAction;
-    final awaitingFavorChoice =
-        widget.gameState.turn.phase == TurnPhase.awaitingCardChoice &&
-                pendingAction is PlayFavorAction
-            ? pendingAction
-            : null;
-    final mustChooseFavorCard =
-        awaitingFavorChoice?.targetPlayerId == widget.localPlayerId;
+    final pendingCardChoice = _pendingCardChoiceFor(hand);
 
     return Stack(
       children: [
@@ -267,19 +309,22 @@ class _GameTableViewState extends State<GameTableView> {
                 .toList(),
             onCancel: _clearSelection,
             onSelect: (targetId) {
-              if (selection.isPair) {
-                widget.onPlayCatPair(selection.cards, targetId);
-              } else {
-                widget.onPlayFavor(selection.cards.first, targetId);
+              switch (selection.kind) {
+                case _TargetActionKind.favor:
+                  widget.onPlayFavor(selection.cards.first, targetId);
+                case _TargetActionKind.catPair:
+                  widget.onPlayCatPair(selection.cards, targetId);
+                case _TargetActionKind.catTrio:
+                  widget.onPlayCatTrio(selection.cards, targetId);
               }
               _clearSelection();
             },
           ),
-        if (mustChooseFavorCard && awaitingFavorChoice != null)
+        if (pendingCardChoice != null)
           CardChoiceOverlay(
-            title: 'Elegí una carta para darle a '
-                '${widget.gameState.playerById(awaitingFavorChoice.playerId)?.name ?? '…'}',
-            candidates: hand,
+            title: pendingCardChoice.title,
+            candidates: pendingCardChoice.candidates,
+            faceUp: pendingCardChoice.faceUp,
             assetPathFor: widget.assetPathFor,
             onSelect: widget.onChooseCard,
           ),
@@ -401,6 +446,10 @@ class _StatusBanner extends StatelessWidget {
               gameState.playerById(pending.targetPlayerId)?.name ?? '…';
           return 'Esperando a que $targetName elija una carta…';
         }
+        if (pending is PlayCatTrioAction && pending.playerId != localPlayerId) {
+          final askerName = gameState.playerById(pending.playerId)?.name ?? '…';
+          return 'Esperando a que $askerName elija una carta…';
+        }
         return null;
       default:
         if (!isMyTurn) {
@@ -436,8 +485,12 @@ class _SelectionBar extends StatelessWidget {
           'Jugar',
           canAct ? onPlaySimple : null,
         ),
-      _NeedsTargetSelection(:final isPair) => (
-          isPair ? 'Par de gatos listo' : 'Favor seleccionado',
+      _NeedsTargetSelection(:final kind) => (
+          switch (kind) {
+            _TargetActionKind.favor => 'Favor seleccionado',
+            _TargetActionKind.catPair => 'Par de gatos listo',
+            _TargetActionKind.catTrio => 'Trío de gatos listo',
+          },
           'Elegir objetivo',
           canAct ? onChooseTarget : null,
         ),

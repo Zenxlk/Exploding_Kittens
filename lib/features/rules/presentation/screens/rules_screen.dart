@@ -12,8 +12,8 @@ import 'package:exploding_kittens/game_engine/models/card/card_type.dart';
 /// Explicación en criollo de las reglas ya implementadas, con las cartas de
 /// verdad para que se entienda de un vistazo. No es el manual oficial del
 /// juego (ver DISCLAIMER.md) — son descripciones propias de cómo se juega
-/// *en esta versión*, así que si algo todavía no está soportado (como el
-/// trío de gatos) se aclara en vez de prometerlo.
+/// *en esta versión*, así que si algo todavía no está soportado se aclara
+/// en vez de prometerlo.
 class RulesScreen extends ConsumerWidget {
   const RulesScreen({super.key});
 
@@ -194,9 +194,9 @@ class _CatCardsExplainer extends StatelessWidget {
           const Gap(4),
           Text(
             'Juntá 2 iguales para elegir a otro jugador y robarle una '
-            'carta al azar de su mano. El trío (3 iguales, para elegir vos '
-            'mismo qué carta robarle) todavía no está disponible en esta '
-            'versión.',
+            'carta al azar de su mano. Con 3 iguales elegís vos qué carta '
+            'robarle, pero a ciegas: ves su mano boca abajo y tocás una '
+            'posición sin saber qué es hasta que la tengas.',
             style: AppTextStyles.caption.copyWith(
               color: AppColors.onBackground.withValues(alpha: 0.75),
             ),

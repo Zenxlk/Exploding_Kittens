@@ -175,11 +175,11 @@ void main() {
         ];
         container
             .read(remoteGameProvider.notifier)
-            .playCatTrio('p1', cards, 'p2', 'chosen-1');
+            .playCatTrio('p1', cards, 'p2');
 
         final action = lastSentAction() as PlayCatTrioAction;
         expect(action.cards, cards);
-        expect(action.chosenCardId, 'chosen-1');
+        expect(action.targetPlayerId, 'p2');
       });
 
       test('playNope manda NopeAction', () {

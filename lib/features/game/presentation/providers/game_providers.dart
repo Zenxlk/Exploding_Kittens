@@ -128,14 +128,12 @@ class GameNotifier extends Notifier<GameSessionState> {
     String playerId,
     List<CardModel> cards,
     String targetPlayerId,
-    String chosenCardId,
   ) =>
       _apply(
         PlayCatTrioAction(
           playerId: playerId,
           cards: cards,
           targetPlayerId: targetPlayerId,
-          chosenCardId: chosenCardId,
         ),
       );
 
@@ -319,14 +317,12 @@ class RemoteGameNotifier extends Notifier<GameSessionState> {
     String playerId,
     List<CardModel> cards,
     String targetPlayerId,
-    String chosenCardId,
   ) =>
       _dispatch(
         PlayCatTrioAction(
           playerId: playerId,
           cards: cards,
           targetPlayerId: targetPlayerId,
-          chosenCardId: chosenCardId,
         ),
       );
 
