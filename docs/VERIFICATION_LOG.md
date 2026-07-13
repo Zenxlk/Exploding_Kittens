@@ -366,7 +366,7 @@ sesión (misma red virtual `netsimd`, sin necesitar el puente
   navegó correctamente. Commit `fix(features): navigate non-host to
   GameScreen when host starts a rematch`.
 
-### Hallazgo pendiente (no arreglado esta sesión — fuera del alcance de Fase 5)
+### Hallazgo de esta sesión (no arreglado en su momento — luego resuelto)
 
 - **Recrear una sala sin salir de la anterior dentro de la misma sesión de
   app deja un "servidor fantasma"**: tras terminar una partida y tocar
@@ -379,11 +379,12 @@ sesión (misma red virtual `netsimd`, sin necesitar el puente
   para continuar las pruebas force-cerrando ambos procesos y empezando de
   cero (que sí sincronizó correctamente, confirmando que no era un
   problema del protocolo en sí). Es un bug real del ciclo de vida del
-  lobby (Fase 3), no de la sincronización de Fase 5 — candidato para
-  arreglarlo haciendo que las salidas de sala fuera de un flujo explícito
-  (p. ej. "Volver al menú" en `GameOverScreen`) llamen a `leaveRoom()`
-  antes de navegar. No se tocó en esta sesión por estar fuera del alcance
-  específico que se estaba verificando.
+  lobby (Fase 3), no de la sincronización de Fase 5. No se tocó en esta
+  sesión por estar fuera del alcance específico que se estaba
+  verificando. **Arreglado en `dev/gameplay-fixes`**: los dos botones
+  "Volver al menú" en `GameOverScreen` ahora llaman `leaveRoom()` antes de
+  navegar. Commit `fix(features): leave the lobby room before returning
+  to the menu`.
 
 ### Nota de entorno
 
