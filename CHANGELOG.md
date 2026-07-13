@@ -11,6 +11,14 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.5.11] — 2026-07-13
+
+### Añadido — Fase 6: mDNS real
+- `MdnsAdvertiser`/`MdnsDiscoverer` migrados de un broadcast UDP propio a mDNS/DNS-SD real vía el paquete `nsd` (Bonjour en Apple, NsdManager en Android). De paso resuelve el `WifiManager.MulticastLock` de Android 10+ (lo maneja `nsd_android` internamente) y vuelve moot la validación de `hostAddress` contra spoofing (la dirección ahora la resuelve el propio protocolo mDNS, no un campo autoreportado)
+- **Sin verificar en un dispositivo real** — `nsd` es enteramente nativo; los tests mockean `NsdPlatformInterface` y solo cubren la lógica propia. `flutter build apk --debug` compila bien, pero eso no prueba que el descubrimiento funcione en la práctica. Ver la nota en ROADMAP.md
+
+---
+
 ## [0.5.10] — 2026-07-13
 
 ### Corregido
