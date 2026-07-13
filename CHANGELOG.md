@@ -11,6 +11,13 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.5.15] — 2026-07-13
+
+### Añadido
+- Reportado por el usuario: no quedaba claro en la HUD de jugadores quién tiene el turno. `PlayersHudWidget` ahora resalta al jugador activo con un anillo de color y una flecha indicadora sobre su avatar, además del cambio de color de fondo que ya existía
+
+---
+
 ## [0.5.14] — 2026-07-13
 
 ### Añadido
