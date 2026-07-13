@@ -129,17 +129,21 @@ final class PlayCatPairAction extends TurnAction {
   List<Object?> get props => [playerId, cards, targetPlayerId];
 }
 
-/// Jugar trío de gatos para ver la mano de otro y elegir
+/// Jugar trío de gatos para robar una carta concreta de la mano del objetivo.
+/// A diferencia de antes, ya NO lleva `chosenCardId`: el actor no puede ver
+/// la mano rival al jugar el trío, así que no hay forma de elegir en este
+/// mismo paso. La elección real llega después, con un `ChooseCardAction` del
+/// actor una vez que la ventana de Nope se cierra (ver
+/// `ActionProcessor.resolveNopeWindow`), a ciegas por posición — igual que
+/// Favor, pero eligiendo el actor en vez del objetivo.
 final class PlayCatTrioAction extends TurnAction {
   const PlayCatTrioAction({
     required super.playerId,
     required this.cards, // exactamente 3 cartas del mismo tipo gato
     required this.targetPlayerId,
-    required this.chosenCardId,
   });
   final List<CardModel> cards;
   final String targetPlayerId;
-  final String chosenCardId;
 
   factory PlayCatTrioAction._fromJson(Map<String, dynamic> j) =>
       PlayCatTrioAction(
@@ -148,7 +152,6 @@ final class PlayCatTrioAction extends TurnAction {
             .map((c) => CardModel.fromJson(c as Map<String, dynamic>))
             .toList(),
         targetPlayerId: j['targetPlayerId'] as String,
-        chosenCardId: j['chosenCardId'] as String,
       );
 
   @override
@@ -157,11 +160,10 @@ final class PlayCatTrioAction extends TurnAction {
         'playerId': playerId,
         'cards': cards.map((c) => c.toJson()).toList(),
         'targetPlayerId': targetPlayerId,
-        'chosenCardId': chosenCardId,
       };
 
   @override
-  List<Object?> get props => [playerId, cards, targetPlayerId, chosenCardId];
+  List<Object?> get props => [playerId, cards, targetPlayerId];
 }
 
 /// Usar Defuse cuando se roba un Exploding Kitten

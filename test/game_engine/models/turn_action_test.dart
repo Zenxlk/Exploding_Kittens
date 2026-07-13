@@ -60,14 +60,12 @@ void main() {
           CardModel(id: 'tacocat_3', type: CardType.tacocat),
         ],
         targetPlayerId: 'p2',
-        chosenCardId: 'chosen-1',
       );
       final restored = TurnAction.fromJson(action.toJson());
       expect(restored, isA<PlayCatTrioAction>());
       final r = restored as PlayCatTrioAction;
       expect(r.cards, action.cards);
       expect(r.targetPlayerId, 'p2');
-      expect(r.chosenCardId, 'chosen-1');
     });
 
     test('DefuseBombAction round-trip', () {

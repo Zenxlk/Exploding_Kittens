@@ -375,6 +375,87 @@ void main() {
         expect(resolved.playerById('p2')!.hand, isEmpty);
       },
     );
+
+    test(
+      'trío de gatos: el actor elige a ciegas después de resolver la '
+      'ventana de Nope, no al jugarlo',
+      () {
+        const trioCards = [
+          CardModel(id: 't1', type: CardType.tacocat),
+          CardModel(id: 't2', type: CardType.tacocat),
+          CardModel(id: 't3', type: CardType.tacocat),
+        ];
+        const rivalCard = CardModel(id: 'rival-1', type: CardType.skip);
+
+        final p1 = PlayerModel(id: 'p1', name: 'A', hand: trioCards);
+        final p2 = PlayerModel(id: 'p2', name: 'B', hand: const [rivalCard]);
+
+        final state = baseState(
+          players: [p1, p2],
+          deck: const DeckModel(drawPile: [], discardPile: []),
+          currentPlayerId: 'p1',
+        );
+
+        const action = PlayCatTrioAction(
+          playerId: 'p1',
+          cards: trioCards,
+          targetPlayerId: 'p2',
+        );
+        final afterPlay = ActionProcessor.process(action, state);
+        final resolved = ActionProcessor.resolveNopeWindow(afterPlay);
+
+        // Todavía no se robó nada — espera a que p1 (el actor) elija.
+        expect(resolved.turn.phase, TurnPhase.awaitingCardChoice);
+        expect(resolved.pendingAction, action);
+        expect(resolved.playerById('p1')!.hand, isEmpty);
+        expect(resolved.playerById('p2')!.hand, [rivalCard]);
+
+        final chosen = ActionProcessor.process(
+          const ChooseCardAction(playerId: 'p1', cardId: 'rival-1'),
+          resolved,
+        );
+
+        expect(chosen.turn.phase, TurnPhase.playing);
+        expect(chosen.pendingAction, isNull);
+        expect(chosen.playerById('p1')!.hand, [rivalCard]);
+        expect(chosen.playerById('p2')!.hand, isEmpty);
+      },
+    );
+
+    test(
+      'trío de gatos contra un objetivo sin cartas se resuelve solo, sin '
+      'pedirle al actor que elija nada',
+      () {
+        const trioCards = [
+          CardModel(id: 't1', type: CardType.tacocat),
+          CardModel(id: 't2', type: CardType.tacocat),
+          CardModel(id: 't3', type: CardType.tacocat),
+        ];
+        final p1 = PlayerModel(id: 'p1', name: 'A', hand: trioCards);
+        final p2 = PlayerModel(id: 'p2', name: 'B', hand: const []);
+
+        final state = baseState(
+          players: [p1, p2],
+          deck: const DeckModel(drawPile: [], discardPile: []),
+          currentPlayerId: 'p1',
+        );
+
+        final afterPlay = ActionProcessor.process(
+          const PlayCatTrioAction(
+            playerId: 'p1',
+            cards: trioCards,
+            targetPlayerId: 'p2',
+          ),
+          state,
+        );
+        final resolved = ActionProcessor.resolveNopeWindow(afterPlay);
+
+        expect(resolved.turn.phase, TurnPhase.playing);
+        expect(resolved.pendingAction, isNull);
+        expect(resolved.playerById('p1')!.hand, isEmpty);
+        expect(resolved.playerById('p2')!.hand, isEmpty);
+      },
+    );
   });
 
   group('Eliminación — orden cronológico', () {

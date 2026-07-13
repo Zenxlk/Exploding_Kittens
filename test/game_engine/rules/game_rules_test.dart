@@ -250,4 +250,58 @@ void main() {
       );
     });
   });
+
+  group('GameRules.validate — ChooseCardAction (trío de gatos)', () {
+    const trioCards = [
+      CardModel(id: 't1', type: CardType.tacocat),
+      CardModel(id: 't2', type: CardType.tacocat),
+      CardModel(id: 't3', type: CardType.tacocat),
+    ];
+    const rivalCard = CardModel(id: 'rival-1', type: CardType.skip);
+
+    GameState awaitingTrioChoiceState() => _state(
+          players: [
+            const PlayerModel(id: 'p1', name: 'A', hand: []),
+            PlayerModel(id: 'p2', name: 'B', hand: const [rivalCard]),
+          ],
+          phase: TurnPhase.awaitingCardChoice,
+          pendingAction: const PlayCatTrioAction(
+            playerId: 'p1',
+            cards: trioCards,
+            targetPlayerId: 'p2',
+          ),
+        );
+
+    test(
+        'es válido si lo elige el actor del trío pendiente y la carta está '
+        'en la mano del objetivo', () {
+      expect(
+        () => GameRules.validate(
+          const ChooseCardAction(playerId: 'p1', cardId: 'rival-1'),
+          awaitingTrioChoiceState(),
+        ),
+        returnsNormally,
+      );
+    });
+
+    test('se rechaza si lo intenta elegir alguien que no es el actor', () {
+      expect(
+        () => GameRules.validate(
+          const ChooseCardAction(playerId: 'p2', cardId: 'rival-1'),
+          awaitingTrioChoiceState(),
+        ),
+        throwsA(isA<InvalidActionException>()),
+      );
+    });
+
+    test('se rechaza si la carta no está en la mano del objetivo', () {
+      expect(
+        () => GameRules.validate(
+          const ChooseCardAction(playerId: 'p1', cardId: 'no-existe'),
+          awaitingTrioChoiceState(),
+        ),
+        throwsA(isA<InvalidActionException>()),
+      );
+    });
+  });
 }

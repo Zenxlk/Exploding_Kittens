@@ -58,8 +58,15 @@ abstract final class GameRules {
       case ChooseCardAction(:final cardId):
         _mustBeInPhase(state, TurnPhase.awaitingCardChoice);
         switch (state.pendingAction) {
+          // Favor: elige el objetivo, desde su propia mano.
           case PlayFavorAction(:final targetPlayerId):
             if (action.playerId != targetPlayerId) {
+              throw const InvalidActionException('No te toca elegir una carta');
+            }
+            _playerMustHaveCard(targetPlayerId, cardId, state);
+          // Trío de gatos: elige el actor (a ciegas), desde la mano rival.
+          case PlayCatTrioAction(:final playerId, :final targetPlayerId):
+            if (action.playerId != playerId) {
               throw const InvalidActionException('No te toca elegir una carta');
             }
             _playerMustHaveCard(targetPlayerId, cardId, state);

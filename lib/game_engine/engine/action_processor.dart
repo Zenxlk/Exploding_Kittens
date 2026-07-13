@@ -180,11 +180,11 @@ abstract final class ActionProcessor {
   // ── Resolución de la ventana de Nope ──────────────────────────────────────────
 
   /// Cierra la ventana de Nope: si la cadena quedó cancelada (nopeChainCount
-  /// impar) descarta el efecto pendiente sin aplicarlo; si no, lo aplica ahora
-  /// — excepto Favor, que en vez de robar una carta al azar deja que el
-  /// objetivo elija cuál entregar (ver ChooseCardAction más abajo): la
-  /// ventana pasa a `awaitingCardChoice` sin limpiar `pendingAction`, porque
-  /// todavía hace falta saber quién pidió la carta y a quién se la piden.
+  /// impar) descarta el efecto pendiente sin aplicarlo; si no, lo aplica
+  /// ahora — excepto Favor y trío de gatos, que en vez de robar una carta al
+  /// azar o ya elegida dejan que alguien elija cuál (ver ChooseCardAction más
+  /// abajo): la ventana pasa a `awaitingCardChoice` sin limpiar
+  /// `pendingAction`, porque todavía hace falta esa info para resolver.
   /// No es una acción de jugador (la dispara un temporizador), por lo que no
   /// pasa por GameRules.validate.
   static GameState resolveNopeWindow(GameState state) {
@@ -201,12 +201,11 @@ abstract final class ActionProcessor {
           awaitingCardChoice = target != null && target.hand.isNotEmpty;
         case PlayCatPairAction(:final playerId, :final targetPlayerId):
           next = _stealRandomCard(playerId, targetPlayerId, next);
-        case PlayCatTrioAction(
-            :final playerId,
-            :final targetPlayerId,
-            :final chosenCardId
-          ):
-          next = _stealChosenCard(playerId, targetPlayerId, chosenCardId, next);
+        case PlayCatTrioAction(:final targetPlayerId):
+          // El actor elige a ciegas (no ve la mano rival); mismo caso límite
+          // que Favor si el objetivo no tiene cartas.
+          final target = next.playerById(targetPlayerId);
+          awaitingCardChoice = target != null && target.hand.isNotEmpty;
         case PlayCardAction(:final card) when card.type == CardType.shuffle:
           next = _resolveShuffle(next);
         default:
@@ -229,12 +228,14 @@ abstract final class ActionProcessor {
     );
   }
 
-  // ── Elegir una carta concreta (hoy: respuesta de Favor) ───────────────────────
+  // ── Elegir una carta concreta (Favor y trío de gatos) ─────────────────────────
 
   static GameState _processChooseCard(
       ChooseCardAction action, GameState state) {
     final next = switch (state.pendingAction) {
       PlayFavorAction(:final playerId, :final targetPlayerId) =>
+        _stealChosenCard(playerId, targetPlayerId, action.cardId, state),
+      PlayCatTrioAction(:final playerId, :final targetPlayerId) =>
         _stealChosenCard(playerId, targetPlayerId, action.cardId, state),
       _ => state,
     };
