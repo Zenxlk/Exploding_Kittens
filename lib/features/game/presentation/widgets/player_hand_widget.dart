@@ -14,6 +14,7 @@ class PlayerHandWidget extends StatelessWidget {
     required this.hand,
     this.selectedCardIds = const {},
     this.playableCardIds = const {},
+    this.justDrawnCardIds = const {},
     this.onCardTap,
     this.cardWidth = 64,
     this.assetPathFor,
@@ -22,6 +23,7 @@ class PlayerHandWidget extends StatelessWidget {
   final List<CardModel> hand;
   final Set<String> selectedCardIds;
   final Set<String> playableCardIds;
+  final Set<String> justDrawnCardIds;
   final ValueChanged<CardModel>? onCardTap;
   final double cardWidth;
   final String? Function(CardType type)? assetPathFor;
@@ -54,10 +56,12 @@ class PlayerHandWidget extends StatelessWidget {
                   left: overlap * i,
                   top: selectedCardIds.contains(hand[i].id) ? 0 : _selectedLift,
                   child: CardWidget(
+                    key: ValueKey(hand[i].id),
                     type: hand[i].type,
                     assetPath: assetPathFor?.call(hand[i].type),
                     isSelected: selectedCardIds.contains(hand[i].id),
                     isPlayable: playableCardIds.contains(hand[i].id),
+                    justDrawn: justDrawnCardIds.contains(hand[i].id),
                     width: cardWidth,
                     onTap: onCardTap == null ? null : () => onCardTap!(hand[i]),
                   ),

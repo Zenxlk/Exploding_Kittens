@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:exploding_kittens/features/game/presentation/widgets/card_widget.dart';
 import 'package:exploding_kittens/features/game/presentation/widgets/deck_widget.dart';
 import 'package:exploding_kittens/features/game/presentation/widgets/game_table_view.dart';
+import 'package:exploding_kittens/game_engine/events/game_event.dart';
 import 'package:exploding_kittens/game_engine/models/card/card_model.dart';
 import 'package:exploding_kittens/game_engine/models/card/card_type.dart';
 import 'package:exploding_kittens/game_engine/models/deck/deck_model.dart';
@@ -966,6 +969,157 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('¡BOOM!'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'un DeckShuffledEvent por el stream de eventos anima el mazo',
+      (tester) async {
+        const me = PlayerModel(id: 'me', name: 'Ana', hand: []);
+        const other = PlayerModel(id: 'other', name: 'Beto', hand: []);
+        final controller = StreamController<GameEvent>.broadcast();
+        addTearDown(controller.close);
+
+        await tester.pumpWidget(
+          _wrap(
+            GameTableView(
+              gameState:
+                  _state(players: const [me, other], currentPlayerId: 'me'),
+              localPlayerId: 'me',
+              onDraw: () {},
+              onPlaySimpleCard: (_) {},
+              onPlayFavor: (_, __) {},
+              onPlayCatPair: (_, __) {},
+              onPlayNope: (_) {},
+              onDefuseBomb: (_, __) {},
+              onPlayCatTrio: (_, __) {},
+              onChooseCard: (_) {},
+              events: controller.stream,
+            ),
+          ),
+        );
+
+        expect(
+          tester.widget<DeckWidget>(find.byType(DeckWidget)).shuffleTrigger,
+          0,
+        );
+
+        controller.add(DeckShuffledEvent(timestamp: DateTime.now()));
+        // La entrega de un StreamController es asíncrona aunque no haya
+        // ningún await explícito en el productor: hace falta un pump para
+        // que el setState() del listener aterrice antes de inspeccionar.
+        await tester.pump();
+
+        expect(
+          tester.widget<DeckWidget>(find.byType(DeckWidget)).shuffleTrigger,
+          1,
+        );
+
+        await tester.pumpAndSettle();
+      },
+    );
+
+    testWidgets(
+      'un CardDrawnEvent propio marca justDrawn en la carta nueva de la '
+      'mano local, no en las que ya tenía',
+      (tester) async {
+        const other = PlayerModel(id: 'other', name: 'Beto', hand: []);
+        final controller = StreamController<GameEvent>.broadcast();
+        addTearDown(controller.close);
+
+        Widget build(List<CardModel> hand) => _wrap(
+              GameTableView(
+                gameState: _state(
+                  players: [
+                    PlayerModel(id: 'me', name: 'Ana', hand: hand),
+                    other,
+                  ],
+                  currentPlayerId: 'me',
+                ),
+                localPlayerId: 'me',
+                onDraw: () {},
+                onPlaySimpleCard: (_) {},
+                onPlayFavor: (_, __) {},
+                onPlayCatPair: (_, __) {},
+                onPlayNope: (_) {},
+                onDefuseBomb: (_, __) {},
+                onPlayCatTrio: (_, __) {},
+                onChooseCard: (_) {},
+                events: controller.stream,
+              ),
+            );
+
+        const cardA = CardModel(id: 'a', type: CardType.shuffle);
+        const cardB = CardModel(id: 'b', type: CardType.skip);
+
+        await tester.pumpWidget(build([cardA]));
+
+        controller
+            .add(CardDrawnEvent(playerId: 'me', timestamp: DateTime.now()));
+        await tester.pump();
+
+        // La mano recién crece en el siguiente rebuild, no en el evento.
+        await tester.pumpWidget(build([cardA, cardB]));
+
+        expect(
+          tester.widget<CardWidget>(find.byKey(const ValueKey('a'))).justDrawn,
+          isFalse,
+        );
+        expect(
+          tester.widget<CardWidget>(find.byKey(const ValueKey('b'))).justDrawn,
+          isTrue,
+        );
+
+        await tester.pumpAndSettle();
+      },
+    );
+
+    testWidgets(
+      'un CardDrawnEvent de otro jugador no marca nada en la mano local',
+      (tester) async {
+        final controller = StreamController<GameEvent>.broadcast();
+        addTearDown(controller.close);
+
+        Widget build(List<CardModel> hand) => _wrap(
+              GameTableView(
+                gameState: _state(
+                  players: [
+                    PlayerModel(id: 'me', name: 'Ana', hand: hand),
+                    const PlayerModel(id: 'other', name: 'Beto', hand: []),
+                  ],
+                  currentPlayerId: 'other',
+                ),
+                localPlayerId: 'me',
+                onDraw: () {},
+                onPlaySimpleCard: (_) {},
+                onPlayFavor: (_, __) {},
+                onPlayCatPair: (_, __) {},
+                onPlayNope: (_) {},
+                onDefuseBomb: (_, __) {},
+                onPlayCatTrio: (_, __) {},
+                onChooseCard: (_) {},
+                events: controller.stream,
+              ),
+            );
+
+        const cardA = CardModel(id: 'a', type: CardType.shuffle);
+        const cardB = CardModel(id: 'b', type: CardType.skip);
+
+        await tester.pumpWidget(build([cardA]));
+
+        controller
+            .add(CardDrawnEvent(playerId: 'other', timestamp: DateTime.now()));
+        await tester.pump();
+
+        // Favor/pareja/trío también hacen crecer la mano local sin que sea
+        // un robo propio: sin el evento de CardDrawnEvent para 'me', nada
+        // debería marcarse como justDrawn.
+        await tester.pumpWidget(build([cardA, cardB]));
+
+        expect(
+          tester.widget<CardWidget>(find.byKey(const ValueKey('b'))).justDrawn,
+          isFalse,
+        );
       },
     );
   });

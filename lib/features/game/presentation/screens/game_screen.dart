@@ -191,6 +191,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                     .chooseCard(localPlayerId, cardId),
             assetPathFor: resolver?.faceAssetFor,
             cardBackAssetPath: resolver?.cardBackAsset(),
+            events: isHost
+                ? ref.read(gameProvider.notifier).events
+                : ref.read(remoteGameProvider.notifier).events,
           ),
         _ => const _CenteredMessage('Repartiendo cartas…'),
       },

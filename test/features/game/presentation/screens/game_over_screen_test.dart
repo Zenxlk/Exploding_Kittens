@@ -184,6 +184,11 @@ void main() {
           ),
         );
 
+        // Deja que termine la entrada escalonada (flutter_animate) antes de
+        // que el test termine, para no dejar un Timer/AnimationController
+        // pendiente.
+        await tester.pumpAndSettle();
+
         expect(find.textContaining('Ana ganó'), findsOneWidget);
         // Ganador primero, luego el orden inverso de eliminación (el
         // último en explotar, Beto, queda 2º; Caro, la primera, última).
@@ -206,6 +211,7 @@ void main() {
             ),
           ),
         );
+        await tester.pumpAndSettle();
 
         expect(find.text('Revancha'), findsNothing);
         expect(
@@ -237,6 +243,32 @@ void main() {
 
         expect(lobbyNotifier.leaveRoomCalled, isTrue);
         expect(find.text('home-screen'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'la entrada escalonada anima sin lanzar y termina con el contenido '
+      'correcto',
+      (tester) async {
+        await tester.pumpWidget(
+          _wrap(
+            gameState: const GameFinished(_result),
+            lobbyState: const LobbyInRoom(room: _room, localPlayerId: 'host'),
+            lobbyNotifier: _FakeLobbyNotifier(
+              const LobbyInRoom(room: _room, localPlayerId: 'host'),
+            ),
+          ),
+        );
+        // Pump a mitad de la animación (antes de que terminen los delays
+        // escalonados de cada fila) para confirmar que no lanza.
+        await tester.pump(const Duration(milliseconds: 150));
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('Ana ganó'), findsOneWidget);
+        expect(find.text('1. Ana'), findsOneWidget);
+        expect(find.text('2. Beto'), findsOneWidget);
+        expect(find.text('3. Caro'), findsOneWidget);
+        expect(find.widgetWithText(FilledButton, 'Revancha'), findsOneWidget);
       },
     );
   });
