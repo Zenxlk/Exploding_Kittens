@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -98,6 +99,9 @@ class _GameOverScreenState extends ConsumerState<GameOverScreen> {
 
     final ranking = [result.winnerId, ...result.eliminationOrder.reversed];
     final isHost = inRoom?.isHost ?? false;
+    // Entrada escalonada: cada fila del ranking aparece un poco después de
+    // la anterior; los botones esperan a que termine la última fila.
+    final buttonsDelay = (200 + ranking.length * 60).ms;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -108,12 +112,12 @@ class _GameOverScreenState extends ConsumerState<GameOverScreen> {
               '¡${result.winnerName} ganó!',
               style: AppTextStyles.title,
               textAlign: TextAlign.center,
-            ),
+            ).animate().fadeIn(duration: 300.ms).slideY(begin: -0.2, end: 0),
             const SizedBox(height: 4),
             Text(
               '${result.totalTurns} turnos jugados',
               style: AppTextStyles.caption,
-            ),
+            ).animate().fadeIn(delay: 100.ms, duration: 300.ms),
             const SizedBox(height: 24),
             for (var i = 0; i < ranking.length; i++)
               Padding(
@@ -122,7 +126,10 @@ class _GameOverScreenState extends ConsumerState<GameOverScreen> {
                   '${i + 1}. ${nameFor(ranking[i])}',
                   style: AppTextStyles.body,
                 ),
-              ),
+              )
+                  .animate()
+                  .fadeIn(delay: (200 + i * 60).ms, duration: 250.ms)
+                  .slideX(begin: 0.1, end: 0),
             const SizedBox(height: 32),
             if (isHost)
               FilledButton(
@@ -130,18 +137,18 @@ class _GameOverScreenState extends ConsumerState<GameOverScreen> {
                 style:
                     FilledButton.styleFrom(backgroundColor: AppColors.primary),
                 child: const Text('Revancha'),
-              )
+              ).animate().fadeIn(delay: buttonsDelay)
             else
               Text(
                 'Esperando a que el host inicie una revancha…',
                 style: AppTextStyles.caption,
                 textAlign: TextAlign.center,
-              ),
+              ).animate().fadeIn(delay: buttonsDelay),
             const SizedBox(height: 12),
             TextButton(
               onPressed: () => _goHome(context),
               child: const Text('Volver al menú'),
-            ),
+            ).animate().fadeIn(delay: buttonsDelay),
           ],
         ),
       ),
