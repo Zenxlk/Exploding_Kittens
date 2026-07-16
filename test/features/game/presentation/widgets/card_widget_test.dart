@@ -41,5 +41,48 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.byType(CardWidget), findsOneWidget);
     });
+
+    testWidgets('justDrawn anima sin lanzar errores', (tester) async {
+      await tester.pumpWidget(
+        _wrap(const CardWidget(type: CardType.shuffle, justDrawn: false)),
+      );
+
+      await tester.pumpWidget(
+        _wrap(const CardWidget(type: CardType.shuffle, justDrawn: true)),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(CardWidget), findsOneWidget);
+    });
+
+    testWidgets(
+      'justDrawn e isPlayable juntas animan sin lanzar errores',
+      (tester) async {
+        await tester.pumpWidget(
+          _wrap(
+            const CardWidget(
+              type: CardType.shuffle,
+              justDrawn: false,
+              isPlayable: false,
+            ),
+          ),
+        );
+
+        await tester.pumpWidget(
+          _wrap(
+            const CardWidget(
+              type: CardType.shuffle,
+              justDrawn: true,
+              isPlayable: true,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(tester.takeException(), isNull);
+        expect(find.byType(CardWidget), findsOneWidget);
+      },
+    );
   });
 }

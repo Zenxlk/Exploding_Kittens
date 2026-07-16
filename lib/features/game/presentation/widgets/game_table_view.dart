@@ -171,6 +171,18 @@ class _GameTableViewState extends State<GameTableView> {
   // un diff de GameState (mezclar no cambia nada renderizable).
   int _shuffleTrigger = 0;
 
+  // Disparador para el pulso corto del mazo al robar (distinto del
+  // bamboleo de mezclar, para que se distingan visualmente).
+  int _deckPulseTrigger = 0;
+
+  // Un CardDrawnEvent para el jugador local llega antes que el rebuild con
+  // la mano ya crecida (el GameState viaja por otro camino) — se guarda
+  // como marcador hasta el próximo didUpdateWidget, donde recién se puede
+  // identificar qué id es la carta nueva. Robar por Favor/pareja/trío
+  // también crece la mano en 1 sin este marcador, así que no se confunden.
+  bool _pendingLocalDraw = false;
+  Set<String> _justDrawnCardIds = {};
+
   StreamSubscription<GameEvent>? _eventsSubscription;
 
   @override
@@ -184,9 +196,23 @@ class _GameTableViewState extends State<GameTableView> {
   }
 
   void _onGameEvent(GameEvent event) {
-    if (event is DeckShuffledEvent) {
-      setState(() => _shuffleTrigger++);
+    switch (event) {
+      case DeckShuffledEvent():
+        setState(() => _shuffleTrigger++);
+      case CardDrawnEvent(:final playerId)
+          when playerId == widget.localPlayerId:
+        _pendingLocalDraw = true;
+        setState(() => _deckPulseTrigger++);
+      default:
+        break;
     }
+  }
+
+  void _scheduleClearJustDrawn(Set<String> ids) {
+    Future.delayed(const Duration(milliseconds: 400), () {
+      if (!mounted) return;
+      setState(() => _justDrawnCardIds = _justDrawnCardIds.difference(ids));
+    });
   }
 
   @override
@@ -209,6 +235,23 @@ class _GameTableViewState extends State<GameTableView> {
     _selectedCardIds =
         _selectedCardIds.where((id) => hand.any((c) => c.id == id)).toSet();
     if (_selectedCardIds.isEmpty) _choosingTarget = false;
+    _justDrawnCardIds =
+        _justDrawnCardIds.where((id) => hand.any((c) => c.id == id)).toSet();
+
+    if (_pendingLocalDraw) {
+      final oldHandIds =
+          (oldWidget.gameState.playerById(widget.localPlayerId)?.hand ??
+                  const <CardModel>[])
+              .map((c) => c.id)
+              .toSet();
+      final newCardIds =
+          hand.map((c) => c.id).where((id) => !oldHandIds.contains(id)).toSet();
+      if (newCardIds.isNotEmpty) {
+        _justDrawnCardIds = {..._justDrawnCardIds, ...newCardIds};
+        _pendingLocalDraw = false;
+        _scheduleClearJustDrawn(newCardIds);
+      }
+    }
 
     // Una nueva revelación (null → no-null) debe volver a mostrarse aunque
     // la anterior ya se hubiera descartado.
@@ -406,6 +449,7 @@ class _GameTableViewState extends State<GameTableView> {
                     cardBackAssetPath: widget.cardBackAssetPath,
                     onTap: _canAct ? widget.onDraw : null,
                     shuffleTrigger: _shuffleTrigger,
+                    pulseTrigger: _deckPulseTrigger,
                   ),
                   const SizedBox(width: 24),
                   DiscardPileWidget(
@@ -438,6 +482,7 @@ class _GameTableViewState extends State<GameTableView> {
                   .map((c) => c.id)
                   .toSet()
               : const {},
+          justDrawnCardIds: _justDrawnCardIds,
           assetPathFor: widget.assetPathFor,
           onCardTap: _onCardTap,
         ),

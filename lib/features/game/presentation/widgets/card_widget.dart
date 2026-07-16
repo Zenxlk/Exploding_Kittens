@@ -20,6 +20,7 @@ class CardWidget extends StatefulWidget {
     this.assetPath,
     this.isPlayable = false,
     this.isSelected = false,
+    this.justDrawn = false,
     this.width = 72,
     this.onTap,
   });
@@ -29,6 +30,10 @@ class CardWidget extends StatefulWidget {
   final String? assetPath;
   final bool isPlayable;
   final bool isSelected;
+  // Distinto de `isPlayable` a propósito: una carta recién robada puede ya
+  // ser jugable, y acoplar los dos efectos duplicaría o pisaría la
+  // animación de entrada.
+  final bool justDrawn;
   final double width;
   final VoidCallback? onTap;
 
@@ -86,6 +91,7 @@ class _CardWidgetState extends State<CardWidget>
                     assetPath: widget.assetPath,
                     isPlayable: widget.isPlayable,
                     isSelected: widget.isSelected,
+                    justDrawn: widget.justDrawn,
                     width: widget.width,
                     height: _height,
                   )
@@ -107,6 +113,7 @@ class _CardFace extends StatelessWidget {
     required this.assetPath,
     required this.isPlayable,
     required this.isSelected,
+    required this.justDrawn,
     required this.width,
     required this.height,
   });
@@ -115,6 +122,7 @@ class _CardFace extends StatelessWidget {
   final String? assetPath;
   final bool isPlayable;
   final bool isSelected;
+  final bool justDrawn;
   final double width;
   final double height;
 
@@ -166,14 +174,22 @@ class _CardFace extends StatelessWidget {
             ),
     );
 
-    // Pop de entrada al volverse jugable: efecto único (no en loop, a
-    // diferencia del glow estático de arriba) que se reproduce solo cuando
-    // esta rama del árbol se monta de nuevo (isPlayable pasa de falso a
-    // verdadero), no en cada rebuild.
-    if (!isPlayable) return card;
-    return card
-        .animate()
-        .scaleXY(begin: 0.92, end: 1, duration: 220.ms, curve: Curves.easeOut);
+    // Ambos efectos son de un solo uso (no en loop, a diferencia del glow
+    // estático de arriba): cada uno se reproduce solo cuando su propia
+    // rama se monta de nuevo (la condición pasa de falsa a verdadera), no
+    // en cada rebuild — mismo truco para las dos, independientes entre sí.
+    Widget result = card;
+    if (isPlayable) {
+      result = result.animate().scaleXY(
+          begin: 0.92, end: 1, duration: 220.ms, curve: Curves.easeOut);
+    }
+    if (justDrawn) {
+      result = result
+          .animate()
+          .fadeIn(duration: 300.ms)
+          .slideY(begin: -0.3, end: 0, duration: 300.ms, curve: Curves.easeOut);
+    }
+    return result;
   }
 }
 
