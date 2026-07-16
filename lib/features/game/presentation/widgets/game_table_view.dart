@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:exploding_kittens/core/constants/game_constants.dart';
@@ -13,6 +15,7 @@ import 'package:exploding_kittens/features/game/presentation/widgets/nope_window
 import 'package:exploding_kittens/features/game/presentation/widgets/player_hand_widget.dart';
 import 'package:exploding_kittens/features/game/presentation/widgets/players_hud_widget.dart';
 import 'package:exploding_kittens/features/game/presentation/widgets/see_the_future_overlay.dart';
+import 'package:exploding_kittens/game_engine/events/game_event.dart';
 import 'package:exploding_kittens/game_engine/models/card/card_model.dart';
 import 'package:exploding_kittens/game_engine/models/card/card_type.dart';
 import 'package:exploding_kittens/game_engine/models/game/game_state.dart';
@@ -119,6 +122,7 @@ class GameTableView extends StatefulWidget {
     required this.onChooseCard,
     this.assetPathFor,
     this.cardBackAssetPath,
+    this.events,
   });
 
   final GameState gameState;
@@ -138,6 +142,12 @@ class GameTableView extends StatefulWidget {
   final ValueChanged<String> onChooseCard;
   final String? Function(CardType type)? assetPathFor;
   final String? cardBackAssetPath;
+  // Mismo stream que ya consume GameSoundController (GameNotifier/
+  // RemoteGameNotifier.events): fuente de animaciones que un diff de
+  // GameState no puede detectar por sí solo (p. ej. mezclar el mazo no
+  // cambia ni su longitud ni nada que se renderice). Opcional para no
+  // romper los call sites existentes que no la necesitan.
+  final Stream<GameEvent>? events;
 
   @override
   State<GameTableView> createState() => _GameTableViewState();
@@ -157,9 +167,41 @@ class _GameTableViewState extends State<GameTableView> {
   // está) y se guarda como estado local hasta que la animación termina.
   String? _explodingPlayerName;
 
+  // Disparador para DeckWidget.shuffleTrigger: viene de un GameEvent, no de
+  // un diff de GameState (mezclar no cambia nada renderizable).
+  int _shuffleTrigger = 0;
+
+  StreamSubscription<GameEvent>? _eventsSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _subscribeToEvents();
+  }
+
+  void _subscribeToEvents() {
+    _eventsSubscription = widget.events?.listen(_onGameEvent);
+  }
+
+  void _onGameEvent(GameEvent event) {
+    if (event is DeckShuffledEvent) {
+      setState(() => _shuffleTrigger++);
+    }
+  }
+
+  @override
+  void dispose() {
+    _eventsSubscription?.cancel();
+    super.dispose();
+  }
+
   @override
   void didUpdateWidget(covariant GameTableView oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.events != widget.events) {
+      _eventsSubscription?.cancel();
+      _subscribeToEvents();
+    }
     // Si la mano cambió (se robó/jugó una carta), la selección puede quedar
     // apuntando a cartas que ya no existen.
     final me = widget.gameState.playerById(widget.localPlayerId);
@@ -363,6 +405,7 @@ class _GameTableViewState extends State<GameTableView> {
                     drawPileCount: widget.gameState.deck.drawPileCount,
                     cardBackAssetPath: widget.cardBackAssetPath,
                     onTap: _canAct ? widget.onDraw : null,
+                    shuffleTrigger: _shuffleTrigger,
                   ),
                   const SizedBox(width: 24),
                   DiscardPileWidget(

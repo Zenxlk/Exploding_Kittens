@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:exploding_kittens/features/game/presentation/widgets/card_widget.dart';
 import 'package:exploding_kittens/features/game/presentation/widgets/deck_widget.dart';
 import 'package:exploding_kittens/features/game/presentation/widgets/game_table_view.dart';
+import 'package:exploding_kittens/game_engine/events/game_event.dart';
 import 'package:exploding_kittens/game_engine/models/card/card_model.dart';
 import 'package:exploding_kittens/game_engine/models/card/card_type.dart';
 import 'package:exploding_kittens/game_engine/models/deck/deck_model.dart';
@@ -966,6 +969,53 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('¡BOOM!'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'un DeckShuffledEvent por el stream de eventos anima el mazo',
+      (tester) async {
+        const me = PlayerModel(id: 'me', name: 'Ana', hand: []);
+        const other = PlayerModel(id: 'other', name: 'Beto', hand: []);
+        final controller = StreamController<GameEvent>.broadcast();
+        addTearDown(controller.close);
+
+        await tester.pumpWidget(
+          _wrap(
+            GameTableView(
+              gameState:
+                  _state(players: const [me, other], currentPlayerId: 'me'),
+              localPlayerId: 'me',
+              onDraw: () {},
+              onPlaySimpleCard: (_) {},
+              onPlayFavor: (_, __) {},
+              onPlayCatPair: (_, __) {},
+              onPlayNope: (_) {},
+              onDefuseBomb: (_, __) {},
+              onPlayCatTrio: (_, __) {},
+              onChooseCard: (_) {},
+              events: controller.stream,
+            ),
+          ),
+        );
+
+        expect(
+          tester.widget<DeckWidget>(find.byType(DeckWidget)).shuffleTrigger,
+          0,
+        );
+
+        controller.add(DeckShuffledEvent(timestamp: DateTime.now()));
+        // La entrega de un StreamController es asíncrona aunque no haya
+        // ningún await explícito en el productor: hace falta un pump para
+        // que el setState() del listener aterrice antes de inspeccionar.
+        await tester.pump();
+
+        expect(
+          tester.widget<DeckWidget>(find.byType(DeckWidget)).shuffleTrigger,
+          1,
+        );
+
+        await tester.pumpAndSettle();
       },
     );
   });

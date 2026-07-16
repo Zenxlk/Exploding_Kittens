@@ -23,5 +23,23 @@ void main() {
       await tester.tap(find.byType(DeckWidget));
       expect(taps, 1);
     });
+
+    testWidgets(
+      'un bump de shuffleTrigger anima sin lanzar y termina en reposo',
+      (tester) async {
+        await tester.pumpWidget(
+          _wrap(const DeckWidget(drawPileCount: 10, shuffleTrigger: 0)),
+        );
+
+        await tester.pumpWidget(
+          _wrap(const DeckWidget(drawPileCount: 10, shuffleTrigger: 1)),
+        );
+        // Pump a mitad de la animación de bamboleo antes de asentarla.
+        await tester.pump(const Duration(milliseconds: 200));
+        await tester.pumpAndSettle();
+
+        expect(find.text('10'), findsOneWidget);
+      },
+    );
   });
 }
