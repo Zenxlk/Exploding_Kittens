@@ -30,5 +30,34 @@ void main() {
       expect(find.text('Shuffle'), findsOneWidget);
       expect(find.byType(DottedCardSlot), findsNothing);
     });
+
+    testWidgets(
+      'al cambiar la carta de arriba, transiciona con AnimatedSwitcher',
+      (tester) async {
+        await tester.pumpWidget(
+          _wrap(
+            const DiscardPileWidget(
+              topCard: CardModel(id: 'a', type: CardType.shuffle),
+            ),
+          ),
+        );
+        expect(find.text('Shuffle'), findsOneWidget);
+
+        await tester.pumpWidget(
+          _wrap(
+            const DiscardPileWidget(
+              topCard: CardModel(id: 'b', type: CardType.skip),
+            ),
+          ),
+        );
+        // Pump a mitad de la transición: ambas cartas pueden coexistir un
+        // instante (fade-out de la vieja, fade-in de la nueva).
+        await tester.pump(const Duration(milliseconds: 100));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Skip'), findsOneWidget);
+        expect(find.text('Shuffle'), findsNothing);
+      },
+    );
   });
 }

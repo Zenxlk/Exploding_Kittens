@@ -21,11 +21,21 @@ class DiscardPileWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final card = topCard;
-    if (card == null) {
-      return DottedCardSlot(width: width);
-    }
-    return CardWidget(
-        type: card.type, assetPath: topCardAssetPath, width: width);
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 200),
+      transitionBuilder: (child, animation) => FadeTransition(
+        opacity: animation,
+        child: ScaleTransition(scale: animation, child: child),
+      ),
+      child: card == null
+          ? DottedCardSlot(key: const ValueKey('empty'), width: width)
+          : CardWidget(
+              key: ValueKey(card.id),
+              type: card.type,
+              assetPath: topCardAssetPath,
+              width: width,
+            ),
+    );
   }
 }
 
