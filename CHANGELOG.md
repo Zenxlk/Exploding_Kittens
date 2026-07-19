@@ -11,6 +11,16 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).
 
 ---
 
+## [0.5.19] — 2026-07-19
+
+### Añadido
+- Soporte cliente para tokens de sesión emitidos por el servidor (`WsClient`): `JoinRoomMessage` gana un campo `token` opcional y se agrega `SessionTokenMessage` (servidor → cliente, dirigido). `WsClient` guarda el token del primer `join_room` y lo reenvía en cada `join_room` posterior, incluidos los reconnects automáticos — necesario porque el backend online (`cards_game_service`, repo aparte) rechaza un `join_room` para un `playerId` ya reclamado si no trae el token exacto emitido antes. `WsServer` (host LAN local) no lo implementa a propósito: nunca manda `session_token`, así que el juego local por WiFi sigue igual. `LobbyRoom`/`LobbyPlayer` quedan sin tocar — el token es un secreto de conexión, no estado compartido de la sala
+
+### Pendiente conocido
+- El token de sesión solo vive en memoria en `WsClient` — a diferencia de `playerId` (persistido con `shared_preferences`), no sobrevive a un crash/reinicio de la app. Falta persistirlo antes de que el modo online dependa de esto en la práctica (ver ROADMAP.md y el `TODO(online-mode)` en `websocket_client.dart`)
+
+---
+
 ## [0.5.18] — 2026-07-18
 
 ### Añadido

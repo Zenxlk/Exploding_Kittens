@@ -106,6 +106,8 @@ empezar la siguiente.
 - [ ] Partida local contra 1–4 bots sin red
 
 ### Modo online
+- [x] Soporte cliente para tokens de sesión emitidos por el servidor (`JoinRoomMessage.token`, `SessionTokenMessage` en `WsClient`) — protocolo listo para `cards_game_service` (backend separado, ver su `docs/TOKENS.md`); `WsServer` (host LAN) no lo implementa a propósito, así que el juego local por WiFi no se ve afectado
+- [ ] Persistir `_sessionToken` (hoy solo en memoria en `WsClient`) igual que ya se hace con `playerId` vía `shared_preferences` — si no, un crash/reinicio de la app pierde el token y el backend online rechazaría el reconnect aunque el `playerId` sí sobreviva (ver `TODO(online-mode)` en `websocket_client.dart`)
 - [ ] Backend de salas (WebSocket server desplegado)
 - [ ] Sistema de cuentas / nicknames persistentes
 - [ ] Matchmaking por código de sala
