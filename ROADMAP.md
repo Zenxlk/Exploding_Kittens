@@ -89,7 +89,7 @@ empezar la siguiente.
 
 ### UI/UX
 - [x] Diseño responsivo: `GameTableView` tiene árboles diferenciados por orientación (`context.isLandscape`) en vez de un único `Column`/`Row` con reflow; ancho de carta de mano y separación mazo/descarte escalan además por tamaño de pantalla (`LayoutConstants`, `context.isTablet` contra el lado corto)
-- [ ] Arrastrar cartas (drag & drop) en `PlayerHandWidget`, además de (o en vez de) la selección por tap — revierte la decisión de Fase 4 de descartar drag & drop por simplicidad
+- [x] Arrastrar cartas (drag & drop) en `PlayerHandWidget`, además de la selección por tap: soltar una carta jugable de inmediato (Skip/Attack/Shuffle/See the Future) sobre el `DragTarget` de mazo/descarte la juega directo, sin pasar por el botón "Jugar"; soltar cualquier otra carta (o una jugable fuera del `DragTarget`) simplemente la selecciona, igual que un tap — las combinaciones que necesitan objetivo (Favor, par/trío de gatos) siguen su flujo de selección + overlay sin cambios
 
 ### Mejoras técnicas pendientes
 - [x] Migrar `MdnsAdvertiser` / `MdnsDiscoverer` de UDP broadcast a mDNS/Bonjour real (`nsd`) — **código completo pero sin verificar en un dispositivo real**: `nsd` es enteramente nativo (Bonjour en Apple, NsdManager en Android), sin implementación en Dart puro que se pueda ejercitar desde este entorno; los tests mockean `NsdPlatformInterface` y solo cubren la lógica propia, no el registro/descubrimiento mDNS real. `flutter build apk --debug` compila y linkea bien (el Kotlin nativo de `nsd_android` es válido), pero eso no prueba que el descubrimiento funcione en la práctica. Falta la misma verificación manual que se hizo para Fase 5 antes de confiar en esto
@@ -106,6 +106,8 @@ empezar la siguiente.
 - [ ] Partida local contra 1–4 bots sin red
 
 ### Modo online
+- [x] Soporte cliente para tokens de sesión emitidos por el servidor (`JoinRoomMessage.token`, `SessionTokenMessage` en `WsClient`) — protocolo listo para `cards_game_service` (backend separado, ver su `docs/TOKENS.md`); `WsServer` (host LAN) no lo implementa a propósito, así que el juego local por WiFi no se ve afectado
+- [ ] Persistir `_sessionToken` (hoy solo en memoria en `WsClient`) igual que ya se hace con `playerId` vía `shared_preferences` — si no, un crash/reinicio de la app pierde el token y el backend online rechazaría el reconnect aunque el `playerId` sí sobreviva (ver `TODO(online-mode)` en `websocket_client.dart`)
 - [ ] Backend de salas (WebSocket server desplegado)
 - [ ] Sistema de cuentas / nicknames persistentes
 - [ ] Matchmaking por código de sala
